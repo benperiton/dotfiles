@@ -13,9 +13,15 @@ set $menu $rofi_cmd -show combi -combi-modes drun#run -modes combi
 # -- Appearance --
 gaps inner 10
 gaps outer 4
-default_border pixel 2              # Remove titlebars, keep thin border
-default_floating_border pixel 2
-for_window [title=".*"] border pixel 2  # Override Fedora layered includes
+default_border pixel 1              # Remove titlebars, keep thin border
+default_floating_border pixel 1
+for_window [title=".*"] border pixel 1  # Override Fedora layered includes
+focus_follows_mouse no
+
+# Border colors:        border  background text indicator child_border
+client.focused          #FFF8E7 #FFF8E7 #000000 #FFF8E7 #FFF8E7
+client.unfocused        #CC5500 #CC5500 #FFFFFF #CC5500 #CC5500
+client.focused_inactive #CC5500 #CC5500 #FFFFFF #CC5500 #CC5500
 output * bg ~/.local/share/wallpaper.jpg fill
 
 # -- Input --
