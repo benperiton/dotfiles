@@ -18,9 +18,16 @@ sanitize() {
     | tr -cs 'a-z0-9._-' '-'
 }
 
+resolve_host() {
+  # Resolve the SSH hostname for the given alias
+  ssh -G "$DEVBOX" 2>/dev/null | awk '/^hostname / {print $2}'
+}
+
 can_reach_devbox() {
-  echo "devtime: checking connectivity to ${DEVBOX}..." >&2
-  ssh -o BatchMode=yes -o ConnectTimeout=5 -o ServerAliveInterval=2 -o ServerAliveCountMax=1 "$DEVBOX" exit 2>&1 >&2
+  local host
+  host="$(resolve_host)"
+  echo "devtime: checking if ${host:-$DEVBOX} is reachable..." >&2
+  ping -c1 -W2 "${host:-$DEVBOX}" >/dev/null 2>&1
 }
 
 bring_up_wireguard() {
