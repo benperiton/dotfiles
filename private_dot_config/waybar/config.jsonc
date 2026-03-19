@@ -111,11 +111,10 @@
                 "warning": 30,
                 "critical": 15
             },
-            "format": "{icon} {capacity}%",
+            "format": "{icon} {capacity}% ({time})",
             "format-full": "{icon} Full",
-            "format-charging": " {capacity}%",
+            "format-charging": " {capacity}% ({time})",
             "format-plugged": " {capacity}%",
-            "format-alt": "{icon} {time}",
             "format-icons": ["", "", "", "", ""]
         },
         "power-profiles-daemon": {
