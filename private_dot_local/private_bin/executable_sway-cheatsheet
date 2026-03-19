@@ -36,6 +36,9 @@ Mod+A               Focus parent
 Mod+`               Show scratchpad
 Mod+Shift+`         Send to scratchpad
 
+--- Lock ---
+Mod+Escape          Lock screen
+
 --- Resize Mode ---
 Mod+R               Enter resize mode
   H/L               Shrink/grow width

@@ -59,6 +59,9 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
+# Lock
+bindsym $mod+Escape exec swaylock
+
 # Workspaces
 bindsym $mod+1 workspace number 1
 bindsym $mod+2 workspace number 2
