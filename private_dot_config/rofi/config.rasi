@@ -1,0 +1,12 @@
+configuration {
+    modi: "combi";
+    combi-modi: "drun,run";
+    show-icons: true;
+    terminal: "alacritty";
+    font: "FiraCode Nerd Font Mono 13";
+    display-drun: "  Apps";
+    display-run: "  Run";
+    display-combi: "  Launch";
+}
+
+@theme "gruvbox"
