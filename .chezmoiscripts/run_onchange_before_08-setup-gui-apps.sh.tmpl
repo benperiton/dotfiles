@@ -1,3 +1,4 @@
+{{- if ne .machine_type "headless" }}
 #!/bin/bash
 set -euo pipefail
 
@@ -37,3 +38,4 @@ if [ ${#MISSING[@]} -gt 0 ]; then
 fi
 
 echo "GUI apps configured"
+{{- end }}

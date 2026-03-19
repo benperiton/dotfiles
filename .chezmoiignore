@@ -1,0 +1,6 @@
+{{- if eq .machine_type "headless" }}
+.config/sway
+.config/waybar
+.config/gammastep
+.local/bin/sway-cheatsheet
+{{- end }}

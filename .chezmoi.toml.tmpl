@@ -1,4 +1,4 @@
-{{ $type_choices := list "desktop" "laptop" }}
+{{ $type_choices := list "desktop" "laptop" "headless" }}
 {{ $machine_type := promptChoiceOnce . "machine_type" "What type of host are you on?" $type_choices }}
 
 {{ $role_choices := list "personal" "work" }}

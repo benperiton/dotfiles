@@ -1,29 +1,35 @@
 #!/bin/bash
 set -euo pipefail
 
-# Base packages for all machines
+# Base packages for all machines (including headless)
 BASE_PACKAGES=(
     zsh
     git
     tmux
-    sway
-    alacritty
     wireguard-tools
-    NetworkManager
     mosh
     ripgrep
     bat
     btop
     lsd
     direnv
+    prettyping
+    nix
+)
+
+{{- if ne .machine_type "headless" }}
+# GUI packages (desktop/laptop only)
+GUI_PACKAGES=(
+    sway
+    alacritty
+    NetworkManager
     flatpak
     autorandr
     gammastep
     mako
-    prettyping
     wlogout
-    nix
 )
+{{- end }}
 
 # Docker repo (needed for docker-ce packages)
 if ! dnf repolist | grep -q docker-ce; then
@@ -50,6 +56,9 @@ ROLE_PACKAGES=(
 {{- end }}
 
 ALL_PACKAGES=("${BASE_PACKAGES[@]}" "${DOCKER_PACKAGES[@]}" "${ROLE_PACKAGES[@]}")
+{{- if ne .machine_type "headless" }}
+ALL_PACKAGES+=("${GUI_PACKAGES[@]}")
+{{- end }}
 
 # Install any that are missing
 MISSING=()

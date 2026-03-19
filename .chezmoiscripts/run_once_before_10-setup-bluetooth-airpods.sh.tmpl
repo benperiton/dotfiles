@@ -1,3 +1,4 @@
+{{- if ne .machine_type "headless" }}
 #!/bin/bash
 set -euo pipefail
 
@@ -25,3 +26,4 @@ monitor.bluez.properties = {
 EOF
     systemctl --user restart wireplumber pipewire pipewire-pulse 2>/dev/null || true
 fi
+{{- end }}
