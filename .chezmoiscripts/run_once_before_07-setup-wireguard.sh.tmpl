@@ -67,20 +67,13 @@ EOF
   echo "Wrote ${conf_path}"
 }
 
-maybe_import_nm() {
+import_nm() {
   local name="$1"
   local conf_path="${CONF_DIR}/${name}.conf"
 
-  # Never risk remote lockout
-  if [ -n "${SSH_CONNECTION:-}" ]; then
-    echo "SSH session detected; skipping NetworkManager import for '$name' to avoid killing your connection."
-    echo "Import later locally: nmcli connection import type wireguard file ${conf_path}"
-    return 0
-  fi
-
   if ! need_cmd nmcli; then
-    echo "NetworkManager not installed (need 'nmcli')." >&2
-    exit 1
+    echo "nmcli not found; skipping NetworkManager import for '$name'"
+    return 0
   fi
 
   if nm_has_conn "$name"; then
@@ -89,21 +82,18 @@ maybe_import_nm() {
   fi
 
   sudo nmcli connection import type wireguard file "$conf_path"
-
-  # Disable autoconnect and force it down immediately
   sudo nmcli connection modify "$name" connection.autoconnect no
   sudo nmcli connection down "$name" >/dev/null 2>&1 || true
-
-  echo "Imported '$name' into NetworkManager (autoconnect disabled; forced down)"
+  echo "Imported '$name' into NetworkManager (autoconnect disabled)"
 }
 
 # Split tunnel
 write_conf "$BASE_NAME" "$WG_CLIENT_ALLOWED_IPS"
-maybe_import_nm "$BASE_NAME"
+import_nm "$BASE_NAME"
 
 # Full tunnel
 write_conf "${BASE_NAME}-all" "0.0.0.0/0, ::/0"
-maybe_import_nm "${BASE_NAME}-all"
+import_nm "${BASE_NAME}-all"
 
 echo ""
 echo "VPN profiles:"
