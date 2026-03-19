@@ -72,7 +72,7 @@ done
 
 if [ ${#MISSING[@]} -gt 0 ]; then
     echo "Installing: ${MISSING[*]}"
-    sudo dnf install -y "${MISSING[@]}"
+    sudo dnf install -y --setopt=install_weak_deps=False "${MISSING[@]}"
 fi
 
 # Install Claude Code
