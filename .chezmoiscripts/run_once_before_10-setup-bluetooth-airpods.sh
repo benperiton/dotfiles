@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euo pipefail
+
+# AirPods require classic Bluetooth (BR/EDR) — they don't work with LE
+BT_CONF="/etc/bluetooth/main.conf"
+if [ -f "$BT_CONF" ]; then
+    if ! grep -q "^ControllerMode = bredr" "$BT_CONF"; then
+        echo "Setting Bluetooth ControllerMode to bredr for AirPods..."
+        sudo sed -i 's/^#\?ControllerMode.*/ControllerMode = bredr/' "$BT_CONF"
+        sudo systemctl restart bluetooth
+    fi
+fi
+
+# Enable AAC codec in PipeWire for better AirPods audio quality
+PIPEWIRE_BT_CONF="/etc/pipewire/wireplumber.conf.d"
+AAC_CONF="$PIPEWIRE_BT_CONF/50-airpods-aac.conf"
+if [ ! -f "$AAC_CONF" ]; then
+    echo "Enabling AAC Bluetooth codec in PipeWire..."
+    sudo mkdir -p "$PIPEWIRE_BT_CONF"
+    sudo tee "$AAC_CONF" > /dev/null <<'EOF'
+monitor.bluez.properties = {
+    bluez5.codecs = [ aac sbc ]
+    bluez5.enable-aac = true
+}
+EOF
+    systemctl --user restart wireplumber pipewire pipewire-pulse 2>/dev/null || true
+fi
