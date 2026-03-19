@@ -74,7 +74,7 @@
         "custom/power": {
             "format": "⏻",
             "tooltip": false,
-            "on-click": "swaynag -t warning -m 'Power Menu' -Z 'Logout' 'swaymsg exit' -Z 'Suspend' 'systemctl suspend' -Z 'Reboot' 'systemctl reboot' -Z 'Shutdown' 'systemctl poweroff'"
+            "on-click": "wlogout"
         }
     },
 

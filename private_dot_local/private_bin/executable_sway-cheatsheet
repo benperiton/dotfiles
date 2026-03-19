@@ -7,7 +7,7 @@ Mod+Enter          Terminal
 Mod+.              App launcher
 Mod+Shift+Q        Kill window
 Mod+Shift+C        Reload config
-Mod+Shift+E        Exit sway
+Mod+Shift+E        Power menu (wlogout)
 
 --- Focus ---
 Mod+H/J/K/L        Focus left/down/up/right
