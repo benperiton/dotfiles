@@ -22,6 +22,7 @@ BASE_PACKAGES=(
     mako
     prettyping
     wlogout
+    nix
 )
 
 # Docker repo (needed for docker-ce packages)
@@ -67,12 +68,6 @@ fi
 if ! command -v claude &>/dev/null; then
     echo "Installing Claude Code..."
     curl -fsSL https://claude.ai/install.sh | bash
-fi
-
-# Install Nix (needed by Devbox)
-if ! command -v nix &>/dev/null; then
-    echo "Installing Nix..."
-    sh <(curl -L https://nixos.org/nix/install) --no-daemon --yes
 fi
 
 # Install Devbox
