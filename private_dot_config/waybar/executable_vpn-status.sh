@@ -10,7 +10,7 @@ IP="${IP:-unknown}"
 VPN_NAME=$(nmcli -t -f NAME,TYPE,STATE con show --active | awk -F: '($2=="vpn" || $2=="wireguard") && $3=="activated" {print $1}')
 
 if [ -z "$VPN_NAME" ]; then
-    echo "{\"text\": \"$LOCK_OPEN $IP\", \"class\": \"disconnected\", \"tooltip\": \"No VPN active\\nPublic IP: $IP\"}"
+    echo "{\"text\": \"$LOCK_OPEN LAN $IP\", \"class\": \"disconnected\", \"tooltip\": \"No VPN active\\nPublic IP: $IP\"}"
 else
-    echo "{\"text\": \"$LOCK_SHUT $IP\", \"class\": \"connected\", \"tooltip\": \"$VPN_NAME\\nPublic IP: $IP\"}"
+    echo "{\"text\": \"$LOCK_SHUT VPN $IP\", \"class\": \"connected\", \"tooltip\": \"$VPN_NAME\\nPublic IP: $IP\"}"
 fi
