@@ -33,6 +33,7 @@ input "type:keyboard" {
 
 # Basics
 bindsym $mod+Return exec $term
+bindsym $mod+Shift+Return exec swaymsg 'workspace number 7' && exec $term -e tmux
 bindsym $mod+Shift+q kill
 bindsym $mod+period exec $menu
 bindsym $mod+Shift+c reload
@@ -119,7 +120,8 @@ bindsym $mod+r mode "resize"
 
 # -- Workspace assignments --
 assign [app_id="firefox"] workspace number 1
-assign [app_id="Alacritty"] workspace number 7
+# Terminal workspace assignment removed — mod+Return opens on current workspace,
+# mod+Shift+Return opens on workspace 7 with tmux
 
 # -- Autostart --
 exec mako
