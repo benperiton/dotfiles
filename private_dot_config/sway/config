@@ -117,6 +117,10 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 
+# -- Workspace assignments --
+assign [app_id="firefox"] workspace number 1
+assign [app_id="Alacritty"] workspace number 7
+
 # -- Autostart --
 exec mako
 

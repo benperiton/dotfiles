@@ -1,0 +1,133 @@
+// -*- mode: jsonc -*-
+[
+    // ── Top bar ──────────────────────────────────────────────
+    {
+        "name": "top",
+        "layer": "top",
+        "position": "top",
+        "height": 30,
+        "spacing": 4,
+
+        "modules-left": [
+            "sway/workspaces",
+            "sway/mode",
+            "sway/scratchpad"
+        ],
+        "modules-center": [
+            "clock"
+        ],
+        "modules-right": [
+            "pulseaudio",
+            "backlight",
+            "custom/dnd",
+            "custom/power"
+        ],
+
+        "sway/workspaces": {
+            "persistent-workspaces": {
+                "1": [], "2": [], "3": [], "4": [], "5": [],
+                "6": [], "7": [], "8": [], "9": [], "10": []
+            }
+        },
+        "sway/mode": {
+            "format": "<span style=\"italic\">{}</span>"
+        },
+        "sway/scratchpad": {
+            "format": "{icon} {count}",
+            "show-empty": false,
+            "format-icons": ["", ""],
+            "tooltip": true,
+            "tooltip-format": "{app}: {title}"
+        },
+        "clock": {
+            "format": "{:%a %b %d  %I:%M %p}",
+            "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+            "format-alt": "{:%Y-%m-%d  %H:%M:%S}"
+        },
+        "pulseaudio": {
+            "format": "{icon} {volume}%",
+            "format-bluetooth": "󰂯 {volume}%",
+            "format-muted": "󰝟 muted",
+            "format-icons": {
+                "headphone": "󰋋",
+                "default": ["󰕿", "󰖀", "󰕾"]
+            },
+            "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+            "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%+",
+            "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-",
+            "tooltip-format": "{desc} — {volume}%"
+        },
+        "backlight": {
+            "format": "{icon} {percent}%",
+            "format-icons": ["󰃞", "󰃟", "󰃠"],
+            "on-scroll-up": "brightnessctl set 2%+",
+            "on-scroll-down": "brightnessctl set 2%-"
+        },
+        "custom/dnd": {
+            "format": "{}",
+            "exec": "if makoctl mode | grep -q do-not-disturb; then echo ''; else echo ''; fi",
+            "on-click": "if makoctl mode | grep -q do-not-disturb; then makoctl mode -r do-not-disturb; else makoctl mode -a do-not-disturb; fi; pkill -RTMIN+1 waybar",
+            "signal": 1,
+            "interval": "once",
+            "tooltip-format": "Toggle Do Not Disturb"
+        },
+        "custom/power": {
+            "format": "⏻",
+            "tooltip": false,
+            "on-click": "swaynag -t warning -m 'Power Menu' -Z 'Logout' 'swaymsg exit' -Z 'Suspend' 'systemctl suspend' -Z 'Reboot' 'systemctl reboot' -Z 'Shutdown' 'systemctl poweroff'"
+        }
+    },
+
+    // ── Bottom bar ───────────────────────────────────────────
+    {
+        "name": "bottom",
+        "layer": "top",
+        "position": "bottom",
+        "height": 30,
+        "spacing": 4,
+
+        "modules-left": [
+            "custom/vpn"
+        ],
+        "modules-center": [],
+        "modules-right": [
+            "tray",
+            "battery",
+            "power-profiles-daemon"
+        ],
+
+        "tray": {
+            "spacing": 10
+        },
+        "custom/vpn": {
+            "format": "{}",
+            "return-type": "json",
+            "exec": "~/.config/waybar/vpn-status.sh",
+            "interval": 5,
+            "on-click": "nm-connection-editor"
+        },
+        "battery": {
+            "states": {
+                "warning": 30,
+                "critical": 15
+            },
+            "format": "{icon} {capacity}%",
+            "format-full": "{icon} Full",
+            "format-charging": " {capacity}%",
+            "format-plugged": " {capacity}%",
+            "format-alt": "{icon} {time}",
+            "format-icons": ["", "", "", "", ""]
+        },
+        "power-profiles-daemon": {
+            "format": "{icon}",
+            "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+            "tooltip": true,
+            "format-icons": {
+                "default": "",
+                "performance": "",
+                "balanced": "",
+                "power-saver": ""
+            }
+        }
+    }
+]
