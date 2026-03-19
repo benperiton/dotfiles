@@ -24,6 +24,10 @@ blinking = "Off"
 [selection]
 save_to_clipboard = false
 
+[[mouse.bindings]]
+mouse = "Right"
+action = "Paste"
+
 [colors.primary]
 background = "#282828"
 foreground = "#ebdbb2"

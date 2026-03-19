@@ -120,6 +120,7 @@ bindsym $mod+r mode "resize"
 
 # -- Workspace assignments --
 assign [app_id="firefox"] workspace number 1
+assign [app_id="sublime_text"] workspace number 2
 # Terminal workspace assignment removed — mod+Return opens on current workspace,
 # mod+Shift+Return opens on workspace 7 with tmux
 
