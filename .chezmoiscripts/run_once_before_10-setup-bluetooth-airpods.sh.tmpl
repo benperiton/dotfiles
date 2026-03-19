@@ -1,5 +1,5 @@
-{{- if ne .machine_type "headless" }}
 #!/bin/bash
+{{- if ne .machine_type "headless" }}
 set -euo pipefail
 
 # AirPods require classic Bluetooth (BR/EDR) — they don't work with LE

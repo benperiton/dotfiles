@@ -33,7 +33,7 @@ input "type:keyboard" {
 
 # Basics
 bindsym $mod+Return exec $term
-bindsym $mod+Shift+Return exec swaymsg 'workspace number 7' && exec $term -e tmux
+bindsym $mod+Shift+Return exec swaymsg 'workspace number 7; exec alacritty -e tmux'
 bindsym $mod+Shift+q kill
 bindsym $mod+period exec $menu
 bindsym $mod+Shift+c reload

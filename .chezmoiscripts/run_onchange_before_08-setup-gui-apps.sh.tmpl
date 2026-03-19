@@ -1,5 +1,5 @@
-{{- if ne .machine_type "headless" }}
 #!/bin/bash
+{{- if ne .machine_type "headless" }}
 set -euo pipefail
 
 echo "Setting up GUI apps via Flatpak..."
