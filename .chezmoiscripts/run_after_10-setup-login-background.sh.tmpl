@@ -1,0 +1,38 @@
+#!/bin/bash
+{{- if ne .machine_type "headless" }}
+set -euo pipefail
+
+LOGINSCREEN="$HOME/.local/share/loginscreen.jpg"
+SDDM_CONF_DIR="/etc/sddm.conf.d"
+DEST="/etc/sddm/loginscreen.jpg"
+THEME_DIR="/usr/share/sddm/themes/03-sway-fedora"
+THEME_CONF_USER="$THEME_DIR/theme.conf.user"
+
+if [ ! -f "$LOGINSCREEN" ]; then
+    echo "No loginscreen image found, skipping login background setup"
+    exit 0
+fi
+
+if [ ! -d "$THEME_DIR" ]; then
+    echo "SDDM theme directory not found, skipping login background setup"
+    exit 0
+fi
+
+# Copy image to /etc/sddm/ (local config, not package-managed)
+sudo mkdir -p /etc/sddm
+if [ -f "$DEST" ] && cmp -s "$LOGINSCREEN" "$DEST"; then
+    echo "Login background already up to date"
+else
+    echo "Copying lockscreen image to /etc/sddm/..."
+    sudo cp "$LOGINSCREEN" "$DEST"
+    echo "Login background updated"
+fi
+
+# Point theme at the /etc/ image via theme.conf.user
+if [ ! -f "$THEME_CONF_USER" ] || ! grep -q "/etc/sddm/loginscreen.jpg" "$THEME_CONF_USER"; then
+    echo "Configuring SDDM theme to use login background..."
+    echo '[General]
+background=/etc/sddm/loginscreen.jpg' | sudo tee "$THEME_CONF_USER" > /dev/null
+    echo "SDDM theme configured"
+fi
+{{- end }}
