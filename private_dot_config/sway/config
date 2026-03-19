@@ -82,8 +82,8 @@ bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
 # Layout
-bindsym $mod+b splith
-bindsym $mod+v splitv
+bindsym $mod+minus splitv
+bindsym $mod+Shift+minus splith
 bindsym $mod+s layout stacking
 bindsym $mod+w layout tabbed
 bindsym $mod+e layout toggle split
@@ -92,9 +92,12 @@ bindsym $mod+Shift+space floating toggle
 bindsym $mod+space focus mode_toggle
 bindsym $mod+a focus parent
 
+# Help
+bindsym $mod+slash exec sway-cheatsheet
+
 # Scratchpad
-bindsym $mod+Shift+minus move scratchpad
-bindsym $mod+minus scratchpad show
+bindsym $mod+Shift+grave move scratchpad
+bindsym $mod+grave scratchpad show
 
 # Resize mode
 mode "resize" {

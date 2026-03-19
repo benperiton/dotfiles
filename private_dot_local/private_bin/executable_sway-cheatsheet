@@ -1,0 +1,47 @@
+#!/bin/bash
+# Display sway keybindings cheatsheet in rofi
+
+cat <<'KEYS' | rofi -dmenu -i -p "Sway Keys" -no-custom -theme-str 'window {width: 50%;}'
+--- Basics ---
+Mod+Enter          Terminal
+Mod+.              App launcher
+Mod+Shift+Q        Kill window
+Mod+Shift+C        Reload config
+Mod+Shift+E        Exit sway
+
+--- Focus ---
+Mod+H/J/K/L        Focus left/down/up/right
+Mod+Arrows          Focus left/down/up/right
+
+--- Move Windows ---
+Mod+Shift+H/J/K/L  Move left/down/up/right
+Mod+Shift+Arrows    Move left/down/up/right
+
+--- Workspaces ---
+Mod+1-0             Switch to workspace 1-10
+Mod+Shift+1-0       Move window to workspace 1-10
+
+--- Layout ---
+Mod+-               Split vertical
+Mod+_               Split horizontal
+Mod+S               Stacking layout
+Mod+W               Tabbed layout
+Mod+E               Toggle split
+Mod+F               Fullscreen
+Mod+Shift+Space     Toggle floating
+Mod+Space           Toggle focus (tiled/floating)
+Mod+A               Focus parent
+
+--- Scratchpad ---
+Mod+`               Show scratchpad
+Mod+Shift+`         Send to scratchpad
+
+--- Resize Mode ---
+Mod+R               Enter resize mode
+  H/L               Shrink/grow width
+  J/K               Grow/shrink height
+  Enter/Escape      Exit resize mode
+
+--- Help ---
+Mod+/               This cheatsheet
+KEYS
