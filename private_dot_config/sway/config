@@ -96,9 +96,6 @@ bindsym $mod+Shift+space floating toggle
 bindsym $mod+space focus mode_toggle
 bindsym $mod+a focus parent
 
-# Screenshot
-bindsym Print exec flameshot gui
-
 # Help
 bindsym $mod+slash exec ~/.local/bin/sway-cheatsheet
 
