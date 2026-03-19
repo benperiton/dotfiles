@@ -1,0 +1,31 @@
+[".local/share/fonts/FiraCodeNerd"]
+    type = "archive"
+    url = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip"
+    exact = true
+    refreshPeriod = "168h"
+
+[".local/share/fonts/JetBrainsMonoNerd"]
+    type = "archive"
+    url = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+    exact = true
+    refreshPeriod = "168h"
+
+[".local/share/zsh/zsh-autosuggestions"]
+    type = "git-repo"
+    url = "https://github.com/zsh-users/zsh-autosuggestions.git"
+    refreshPeriod = "168h"
+
+[".local/share/zsh/zsh-syntax-highlighting"]
+    type = "git-repo"
+    url = "https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    refreshPeriod = "168h"
+
+[".local/share/zsh/zsh-z"]
+    type = "git-repo"
+    url = "https://github.com/agkozak/zsh-z.git"
+    refreshPeriod = "168h"
+
+[".local/share/zsh/powerlevel10k"]
+    type = "git-repo"
+    url = "https://github.com/romkatv/powerlevel10k.git"
+    refreshPeriod = "168h"

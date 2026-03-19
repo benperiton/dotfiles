@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+{{- if and (eq .machine_role "personal") (eq .machine_type "laptop") }}
+
+trap 'echo "Error on line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
+
+need_cmd() { command -v "$1" >/dev/null 2>&1; }
+nm_has_conn() { nmcli -t -f NAME connection show | grep -Fxq "$1"; }
+
+if ! need_cmd wg; then
+  echo "WireGuard not installed (need 'wg')." >&2
+  exit 1
+fi
+
+CONF_DIR="/etc/wireguard"
+
+BASE_NAME="wg-{{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.name" }}"
+
+WG_SERVER_ENDPOINT={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.server-endpoint" | quote }}
+WG_SERVER_PUBLICKEY={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.server-publickey" | quote }}
+WG_CLIENT_DNS={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-dns" | quote }}
+WG_CLIENT_PRIVATEKEY={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-privatekey" | quote }}
+WG_CLIENT_ADDRESS={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-address" | quote }}
+WG_CLIENT_ALLOWED_IPS={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-allowedips" | quote }}
+WG_CLIENT_PRESHAREDKEY={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-presharedkey" | quote }}
+
+sudo -v
+sudo install -d -m 700 "$CONF_DIR"
+
+tmp="$(mktemp)"
+cleanup() { rm -f "$tmp"; }
+trap cleanup EXIT
+
+write_conf() {
+  local name="$1"
+  local allowed_ips="$2"
+  local conf_path="${CONF_DIR}/${name}.conf"
+
+  if sudo test -f "$conf_path"; then
+    echo "${conf_path} already exists"
+    return 0
+  fi
+
+  cat > "$tmp" <<EOF
+[Interface]
+PrivateKey = ${WG_CLIENT_PRIVATEKEY}
+Address = ${WG_CLIENT_ADDRESS}
+DNS = ${WG_CLIENT_DNS}
+
+[Peer]
+PublicKey = ${WG_SERVER_PUBLICKEY}
+EOF
+
+  if [ -n "${WG_CLIENT_PRESHAREDKEY}" ]; then
+    cat >> "$tmp" <<EOF
+PresharedKey = ${WG_CLIENT_PRESHAREDKEY}
+EOF
+  fi
+
+  cat >> "$tmp" <<EOF
+AllowedIPs = ${allowed_ips}
+Endpoint = ${WG_SERVER_ENDPOINT}
+PersistentKeepalive = 25
+EOF
+
+  sudo install -m 600 "$tmp" "$conf_path"
+  echo "Wrote ${conf_path}"
+}
+
+maybe_import_nm() {
+  local name="$1"
+  local conf_path="${CONF_DIR}/${name}.conf"
+
+  # Never risk remote lockout
+  if [ -n "${SSH_CONNECTION:-}" ]; then
+    echo "SSH session detected; skipping NetworkManager import for '$name' to avoid killing your connection."
+    echo "Import later locally: nmcli connection import type wireguard file ${conf_path}"
+    return 0
+  fi
+
+  if ! need_cmd nmcli; then
+    echo "NetworkManager not installed (need 'nmcli')." >&2
+    exit 1
+  fi
+
+  if nm_has_conn "$name"; then
+    echo "NetworkManager connection '$name' already exists"
+    return 0
+  fi
+
+  sudo nmcli connection import type wireguard file "$conf_path"
+
+  # Disable autoconnect and force it down immediately
+  sudo nmcli connection modify "$name" connection.autoconnect no
+  sudo nmcli connection down "$name" >/dev/null 2>&1 || true
+
+  echo "Imported '$name' into NetworkManager (autoconnect disabled; forced down)"
+}
+
+# Split tunnel
+write_conf "$BASE_NAME" "$WG_CLIENT_ALLOWED_IPS"
+maybe_import_nm "$BASE_NAME"
+
+# Full tunnel
+write_conf "${BASE_NAME}-all" "0.0.0.0/0, ::/0"
+maybe_import_nm "${BASE_NAME}-all"
+
+echo ""
+echo "VPN profiles:"
+echo "  - Split tunnel: ${BASE_NAME}"
+echo "  - Full tunnel : ${BASE_NAME}-all"
+echo "  (Only bring up one at a time.)"
+{{- end }}

@@ -1,0 +1,45 @@
+[user]
+    name = {{ onepasswordRead "op://ben-dotfiles/git/config.name" | quote }}
+    email = {{ onepasswordRead "op://ben-dotfiles/git/config.email" | quote }}
+
+[alias]
+    squash-all = "!f(){ git reset $(git commit-tree HEAD^{tree} -m \"${1:-A new start}\");};f"
+
+[color]
+    ui = auto
+
+[color "branch"]
+    current = green
+    local = yellow
+    remote = yellow reverse
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = yellow
+    changed = green
+    untracked = cyan
+
+[core]
+    excludesfile = ~/.config/git/gitignore_global
+
+[gui]
+    encoding = utf-8
+    gcwarning = false
+    diffcontext = 1
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = false
+
+[push]
+    default = simple
+
+[remote]
+    pushDefault = origin

@@ -1,0 +1,12 @@
+{{ $type_choices := list "desktop" "laptop" }}
+{{ $machine_type := promptChoiceOnce . "machine_type" "What type of host are you on?" $type_choices }}
+
+{{ $role_choices := list "personal" "work" }}
+{{ $machine_role := promptChoiceOnce . "machine_role" "What is the user of this machine?" $role_choices }}
+
+[data]
+machine_type = {{ $machine_type | quote }}
+machine_role = {{ $machine_role | quote }}
+
+[onepassword]
+mode = "account"

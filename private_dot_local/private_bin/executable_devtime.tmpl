@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEVBOX="${DEVBOX:-devbox}"
+WG_IFACE="${WG_IFACE:-wg-{{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.name" }}}"
+
+get_local_name() {
+  if grep -qi microsoft /proc/version 2>/dev/null; then
+    hostname.exe 2>/dev/null | tr -d '\r\n' || hostname -s
+  else
+    hostname -s 2>/dev/null || hostname
+  fi
+}
+
+sanitize() {
+  printf '%s' "$1" \
+    | tr '[:upper:]' '[:lower:]' \
+    | tr -cs 'a-z0-9._-' '-'
+}
+
+can_reach_devbox() {
+  echo "devtime: checking connectivity to ${DEVBOX}..." >&2
+  ssh -o BatchMode=yes -o ConnectTimeout=5 -o ServerAliveInterval=2 -o ServerAliveCountMax=1 "$DEVBOX" exit 2>&1 >&2
+}
+
+bring_up_wireguard() {
+  echo "devtime: bringing up WireGuard (${WG_IFACE})..." >&2
+
+  if command -v nmcli >/dev/null 2>&1; then
+    nmcli connection up "$WG_IFACE" >/dev/null && return
+  fi
+
+  if command -v wg-quick >/dev/null 2>&1; then
+    sudo wg-quick up "$WG_IFACE" >/dev/null && return
+  fi
+
+  echo "devtime: no way to start WireGuard" >&2
+  exit 1
+}
+
+LOCAL_NAME="${DEVTIME_NAME:-$(get_local_name)}"
+SESSION="$(sanitize "$LOCAL_NAME")-remote"
+
+if ! can_reach_devbox; then
+  bring_up_wireguard
+  sleep 2
+  if ! can_reach_devbox; then
+    echo "devtime: cannot reach ${DEVBOX} after bringing up WireGuard" >&2
+    exit 1
+  fi
+fi
+
+echo "devtime: connecting to ${DEVBOX} (session: ${SESSION})..." >&2
+exec mosh "$DEVBOX" -- tmux new-session -A -s "$SESSION"

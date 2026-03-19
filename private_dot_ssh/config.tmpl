@@ -1,0 +1,18 @@
+# -- Git --
+
+Host github.com
+    HostName github.com
+    IdentityFile ~/.ssh/id_github
+    User git
+    IdentitiesOnly yes
+
+{{- if eq .machine_role "personal" }}
+
+# -- Home --
+
+{{ onepasswordRead "op://ben-dotfiles/ssh/config.home" }}
+
+# -- Servers --
+
+{{ onepasswordRead "op://ben-dotfiles/ssh/config.servers" }}
+{{- end }}

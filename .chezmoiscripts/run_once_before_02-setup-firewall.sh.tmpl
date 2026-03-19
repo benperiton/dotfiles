@@ -1,0 +1,35 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Configuring firewall..."
+
+{{- if eq .machine_role "personal" }}
+# Personal: lock SSH and mosh to local LAN only via trusted zone
+if ! sudo firewall-cmd --zone=trusted --query-source=192.168.10.0/24 --permanent &>/dev/null; then
+    echo "Adding 192.168.10.0/24 to trusted zone"
+    sudo firewall-cmd --zone=trusted --permanent --add-source=192.168.10.0/24
+fi
+
+for svc in ssh mosh; do
+    if ! sudo firewall-cmd --zone=trusted --query-service="$svc" --permanent &>/dev/null; then
+        echo "Adding $svc to trusted zone"
+        sudo firewall-cmd --zone=trusted --add-service="$svc" --permanent
+    fi
+    # Remove from default zone so only trusted LAN can connect
+    if sudo firewall-cmd --query-service="$svc" --permanent &>/dev/null; then
+        echo "Removing $svc from default zone"
+        sudo firewall-cmd --remove-service="$svc" --permanent
+    fi
+done
+{{- else }}
+# Work: allow SSH and mosh from anywhere
+for svc in ssh mosh; do
+    if ! sudo firewall-cmd --query-service="$svc" --permanent &>/dev/null; then
+        echo "Adding $svc to default zone"
+        sudo firewall-cmd --add-service="$svc" --permanent
+    fi
+done
+{{- end }}
+
+sudo firewall-cmd --reload
+echo "Firewall configured"

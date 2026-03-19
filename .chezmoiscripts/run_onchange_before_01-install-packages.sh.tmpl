@@ -1,0 +1,75 @@
+#!/bin/bash
+set -euo pipefail
+
+# Base packages for all machines
+BASE_PACKAGES=(
+    zsh
+    git
+    tmux
+    sway
+    alacritty
+    wireguard-tools
+    NetworkManager
+    mosh
+    ripgrep
+    bat
+    btop
+    lsd
+    direnv
+    flatpak
+    autorandr
+    gammastep
+    mako
+    prettyping
+)
+
+# Docker repo (needed for docker-ce packages)
+if ! dnf repolist | grep -q docker-ce; then
+    sudo dnf config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
+fi
+
+DOCKER_PACKAGES=(
+    docker-ce
+    docker-ce-cli
+    containerd.io
+    docker-buildx-plugin
+    docker-compose-plugin
+)
+
+# Role-specific packages
+{{- if eq .machine_role "personal" }}
+ROLE_PACKAGES=(
+    # Add personal-machine packages here
+)
+{{- else if eq .machine_role "work" }}
+ROLE_PACKAGES=(
+    # Add work-machine packages here
+)
+{{- end }}
+
+ALL_PACKAGES=("${BASE_PACKAGES[@]}" "${DOCKER_PACKAGES[@]}" "${ROLE_PACKAGES[@]}")
+
+# Install any that are missing
+MISSING=()
+for pkg in "${ALL_PACKAGES[@]}"; do
+    if ! rpm -q "$pkg" &>/dev/null; then
+        MISSING+=("$pkg")
+    fi
+done
+
+if [ ${#MISSING[@]} -gt 0 ]; then
+    echo "Installing: ${MISSING[*]}"
+    sudo dnf install -y "${MISSING[@]}"
+fi
+
+# Install Claude Code
+if ! command -v claude &>/dev/null; then
+    echo "Installing Claude Code..."
+    curl -fsSL https://claude.ai/install.sh | bash
+fi
+
+# Install Devbox
+if ! command -v devbox &>/dev/null; then
+    echo "Installing Devbox..."
+    curl -fsSL https://get.jetify.com/devbox | bash
+fi

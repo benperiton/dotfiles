@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euo pipefail
+{{- if eq .machine_role "personal" }}
+
+SSH_DIR="$HOME/.ssh"
+mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
+
+write_key() {
+    local file="$1"
+    local content="$2"
+    local perm="$3"
+    if [ ! -f "$file" ]; then
+        echo "Writing $file"
+        printf '%b\n' "$content" > "$file"
+        chmod "$perm" "$file"
+    fi
+}
+
+write_key "$SSH_DIR/id_github"     {{ onepasswordRead "op://ben-dotfiles/ssh/github.privatekey" | quote }}     600
+write_key "$SSH_DIR/id_github.pub" {{ onepasswordRead "op://ben-dotfiles/ssh/github.publickey" | quote }}      644
+write_key "$SSH_DIR/id_skund_home"     {{ onepasswordRead "op://ben-dotfiles/ssh/skund-home.privatekey" | quote }}     600
+write_key "$SSH_DIR/id_skund_home.pub" {{ onepasswordRead "op://ben-dotfiles/ssh/skund-home.publickey" | quote }}      644
+write_key "$SSH_DIR/id_skund_edge"     {{ onepasswordRead "op://ben-dotfiles/ssh/skund-edge.privatekey" | quote }}     600
+write_key "$SSH_DIR/id_skund_edge.pub" {{ onepasswordRead "op://ben-dotfiles/ssh/skund-edge.publickey" | quote }}      644
+
+# Add skund-home to authorized_keys
+AUTH_KEYS="$SSH_DIR/authorized_keys"
+SKUND_HOME_PUB={{ onepasswordRead "op://ben-dotfiles/ssh/skund-home.publickey" | quote }}
+if [ ! -f "$AUTH_KEYS" ] || ! grep -qF "$SKUND_HOME_PUB" "$AUTH_KEYS"; then
+    echo "Adding skund-home to authorized_keys"
+    printf '%b\n' "$SKUND_HOME_PUB" >> "$AUTH_KEYS"
+    chmod 600 "$AUTH_KEYS"
+fi
+
+echo "SSH keys configured"
+{{- end }}
