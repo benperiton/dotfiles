@@ -124,6 +124,7 @@ assign [app_id="Alacritty"] workspace number 7
 # -- Autostart --
 exec mako
 exec gammastep-indicator
+exec blueman-applet
 
 # Fedora layered includes (swayidle, bar, media keys, etc.)
 include '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "/etc/sway/config.d/*.conf" "${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/*.conf")'
