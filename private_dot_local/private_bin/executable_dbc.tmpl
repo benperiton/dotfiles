@@ -5,7 +5,7 @@ DEVBOX="${DEVBOX:-devbox}"
 WG_IFACE="${WG_IFACE:-wg-{{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.name" }}}"
 DEVBOX_MAC="${DEVBOX_MAC:-1C:1B:0D:A1:B5:76}"
 LAN_BROADCAST="${LAN_BROADCAST:-192.168.10.255}"
-WOL_WAIT="${WOL_WAIT:-30}"
+WOL_WAIT="${WOL_WAIT:-90}"
 
 get_local_name() {
   if grep -qi microsoft /proc/version 2>/dev/null; then
@@ -114,6 +114,21 @@ wait_for_devbox() {
   return 1
 }
 
+wait_for_ssh() {
+  local host waited=0 max=60
+  host="$(resolve_host)"
+  host="${host:-$DEVBOX}"
+  echo "devtime: waiting for SSH to be ready on ${host}..." >&2
+  while (( waited < max )); do
+    if ssh -o ConnectTimeout=2 -o BatchMode=yes "$DEVBOX" true 2>/dev/null; then
+      return 0
+    fi
+    sleep 3
+    waited=$((waited + 3))
+  done
+  echo "devtime: SSH not ready after ${max}s, trying to connect anyway..." >&2
+}
+
 try_wol_and_wait() {
   local broadcast="${1:-$LAN_BROADCAST}"
   send_wol "$DEVBOX_MAC" "$broadcast" || return 1
@@ -150,5 +165,6 @@ else
   fi
 fi
 
+wait_for_ssh
 echo "devtime: connecting to ${DEVBOX} (session: ${SESSION})..." >&2
 exec mosh "$DEVBOX" -- tmux new-session -A -s "$SESSION"
