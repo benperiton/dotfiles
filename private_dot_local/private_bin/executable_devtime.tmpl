@@ -3,6 +3,9 @@ set -euo pipefail
 
 DEVBOX="${DEVBOX:-devbox}"
 WG_IFACE="${WG_IFACE:-wg-{{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.name" }}}"
+DEVBOX_MAC="${DEVBOX_MAC:-1C:1B:0D:A1:B5:76}"
+LAN_BROADCAST="${LAN_BROADCAST:-192.168.10.255}"
+WOL_WAIT="${WOL_WAIT:-30}"
 
 get_local_name() {
   if grep -qi microsoft /proc/version 2>/dev/null; then
@@ -19,15 +22,27 @@ sanitize() {
 }
 
 resolve_host() {
-  # Resolve the SSH hostname for the given alias
   ssh -G "$DEVBOX" 2>/dev/null | awk '/^hostname / {print $2}'
+}
+
+can_reach() {
+  ping -c1 -W2 "$1" >/dev/null 2>&1
+}
+
+on_home_lan() {
+  echo "devtime: checking if we're on the home LAN..." >&2
+  local gw rdns
+  gw=$(ip route show default 2>/dev/null | awk '/default/ {print $3; exit}')
+  [[ -z "$gw" ]] && return 1
+  rdns=$(dig +short -x "$gw" 2>/dev/null)
+  [[ "$rdns" == jeeves.* ]]
 }
 
 can_reach_devbox() {
   local host
   host="$(resolve_host)"
   echo "devtime: checking if ${host:-$DEVBOX} is reachable..." >&2
-  ping -c1 -W2 "${host:-$DEVBOX}" >/dev/null 2>&1
+  can_reach "${host:-$DEVBOX}"
 }
 
 bring_up_wireguard() {
@@ -45,15 +60,93 @@ bring_up_wireguard() {
   exit 1
 }
 
+send_wol() {
+  local mac="$1" broadcast="$2"
+  echo "devtime: sending Wake-on-LAN to ${mac} via ${broadcast}..." >&2
+
+  # Build the magic packet: 6x 0xFF then MAC repeated 16 times
+  local mac_bytes
+  mac_bytes=$(printf '%s' "$mac" | tr -d ':')
+  local payload
+  payload=$(printf 'f%.0s' {1..12})  # 6 bytes of 0xFF
+  for _ in $(seq 1 16); do
+    payload+="$mac_bytes"
+  done
+
+  # Send via perl (widely available, no extra deps)
+  if command -v perl >/dev/null 2>&1; then
+    perl -e '
+      use IO::Socket::INET;
+      my $sock = IO::Socket::INET->new(Proto=>"udp", Broadcast=>1)
+        or die "socket: $!";
+      my $payload = pack("H*", $ARGV[0]);
+      my $addr = sockaddr_in(9, inet_aton($ARGV[1]));
+      $sock->send($payload, 0, $addr) or die "send: $!";
+    ' "$payload" "$broadcast"
+    return
+  fi
+
+  # Fallback: try python3
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c "
+import socket, struct
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+s.sendto(bytes.fromhex('$payload'), ('$broadcast', 9))
+"
+    return
+  fi
+
+  echo "devtime: no way to send WoL packet (need perl or python3)" >&2
+  return 1
+}
+
+wait_for_devbox() {
+  local waited=0
+  echo "devtime: waiting up to ${WOL_WAIT}s for devbox to come up..." >&2
+  while (( waited < WOL_WAIT )); do
+    sleep 5
+    waited=$((waited + 5))
+    if can_reach_devbox; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+try_wol_and_wait() {
+  local broadcast="${1:-$LAN_BROADCAST}"
+  send_wol "$DEVBOX_MAC" "$broadcast" || return 1
+  wait_for_devbox
+}
+
+# --- main ---
+
 LOCAL_NAME="${DEVTIME_NAME:-$(get_local_name)}"
 SESSION="$(sanitize "$LOCAL_NAME")-remote"
 
-if ! can_reach_devbox; then
+if on_home_lan; then
+  # We're on the home network
+  if ! can_reach_devbox; then
+    echo "devtime: on LAN but devbox is not responding, trying WoL..." >&2
+    if ! try_wol_and_wait "$LAN_BROADCAST"; then
+      echo "devtime: devbox did not come up after WoL" >&2
+      exit 1
+    fi
+  fi
+else
+  # Not on the home network - need WireGuard
   bring_up_wireguard
   sleep 2
+
   if ! can_reach_devbox; then
-    echo "devtime: cannot reach ${DEVBOX} after bringing up WireGuard" >&2
-    exit 1
+    echo "devtime: connected via WireGuard but devbox is not responding, trying WoL..." >&2
+    # Try WoL via the WireGuard tunnel to the LAN broadcast
+    if ! try_wol_and_wait "$LAN_BROADCAST"; then
+      echo "devtime: devbox did not come up after WoL over WireGuard" >&2
+      echo "devtime: (WoL over VPN may not work - the box might be fully off)" >&2
+      exit 1
+    fi
   fi
 fi
 
