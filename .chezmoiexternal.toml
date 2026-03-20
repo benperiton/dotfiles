@@ -10,6 +10,19 @@
     exact = true
     refreshPeriod = "168h"
 
+[".local/bin/winbox"]
+    type = "archive-file"
+    url = "https://download.mikrotik.com/routeros/winbox/4.0.1/WinBox_Linux.zip"
+    path = "WinBox"
+    executable = true
+    refreshPeriod = "168h"
+
+[".local/share/icons/winbox.png"]
+    type = "archive-file"
+    url = "https://download.mikrotik.com/routeros/winbox/4.0.1/WinBox_Linux.zip"
+    path = "assets/img/winbox.png"
+    refreshPeriod = "168h"
+
 [".local/share/zsh/zsh-autosuggestions"]
     type = "git-repo"
     url = "https://github.com/zsh-users/zsh-autosuggestions.git"
