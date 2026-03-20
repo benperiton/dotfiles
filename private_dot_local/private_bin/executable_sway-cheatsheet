@@ -26,7 +26,7 @@ Mod+-               Split vertical
 Mod+_               Split horizontal
 Mod+S               Stacking layout
 Mod+W               Tabbed layout
-Mod+E               Toggle split
+Mod+E               Tiled layout (split toggle)
 Mod+F               Fullscreen
 Mod+Shift+Space     Toggle floating
 Mod+Space           Toggle focus (tiled/floating)
