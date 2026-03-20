@@ -5,6 +5,7 @@ DEVBOX="${DEVBOX:-devbox}"
 WG_IFACE="${WG_IFACE:-wg-{{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.name" }}}"
 DEVBOX_MAC="${DEVBOX_MAC:-1C:1B:0D:A1:B5:76}"
 LAN_BROADCAST="${LAN_BROADCAST:-192.168.10.255}"
+WOL_RELAY="${WOL_RELAY:-192.168.10.254}"
 WOL_WAIT="${WOL_WAIT:-90}"
 
 get_local_name() {
@@ -156,10 +157,9 @@ else
 
   if ! can_reach_devbox; then
     echo "devtime: connected via WireGuard but devbox is not responding, trying WoL..." >&2
-    # Try WoL via the WireGuard tunnel to the LAN broadcast
-    if ! try_wol_and_wait "$LAN_BROADCAST"; then
+    # Send WoL via the router's static ARP relay address
+    if ! try_wol_and_wait "$WOL_RELAY"; then
       echo "devtime: devbox did not come up after WoL over WireGuard" >&2
-      echo "devtime: (WoL over VPN may not work - the box might be fully off)" >&2
       exit 1
     fi
   fi
