@@ -5,10 +5,12 @@ echo "Configuring firewall..."
 
 {{- if eq .machine_role "personal" }}
 # Personal: lock SSH and mosh to local LAN only via trusted zone
-if ! sudo firewall-cmd --zone=trusted --query-source=192.168.10.0/24 --permanent &>/dev/null; then
-    echo "Adding 192.168.10.0/24 to trusted zone"
-    sudo firewall-cmd --zone=trusted --permanent --add-source=192.168.10.0/24
-fi
+for subnet in 192.168.10.0/24 192.168.90.0/24; do
+    if ! sudo firewall-cmd --zone=trusted --query-source="$subnet" --permanent &>/dev/null; then
+        echo "Adding $subnet to trusted zone"
+        sudo firewall-cmd --zone=trusted --permanent --add-source="$subnet"
+    fi
+done
 
 for svc in ssh mosh; do
     if ! sudo firewall-cmd --zone=trusted --query-service="$svc" --permanent &>/dev/null; then
