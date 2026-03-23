@@ -34,9 +34,11 @@ GUI_PACKAGES=(
     gstreamer1-plugins-bad-freeworld
     gstreamer1-plugins-ugly
     gstreamer1-vaapi
+    code
 )
 {{- end }}
 
+{{- if ne .machine_type "headless" }}
 # RPM Fusion repos (needed for multimedia codecs)
 if ! dnf repolist | grep -q rpmfusion-free; then
     sudo dnf install -y \
@@ -48,6 +50,13 @@ fi
 if rpm -q ffmpeg-free &>/dev/null; then
     sudo dnf swap ffmpeg-free ffmpeg --allowerasing -y
 fi
+
+# VS Code repo
+if ! dnf repolist | grep -q code; then
+    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+    echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null
+fi
+{{- end }}
 
 # Docker repo (needed for docker-ce packages)
 if ! dnf repolist | grep -q docker-ce; then
