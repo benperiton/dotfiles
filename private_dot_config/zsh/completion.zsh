@@ -2,6 +2,3 @@
 autoload -Uz compinit && compinit
 zstyle ':completion:*' menu select
 zstyle ':completion:*' rehash true
-
-# Jujutsu (jj) dynamic completions
-source <(COMPLETE=zsh jj)
