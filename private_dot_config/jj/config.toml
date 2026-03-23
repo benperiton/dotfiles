@@ -1,0 +1,6 @@
+[user]
+name = "Ben Periton"
+email = "dev@ben.periton.co.uk"
+
+[ui]
+editor = "nvim"
