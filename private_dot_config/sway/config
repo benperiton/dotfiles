@@ -125,6 +125,7 @@ assign [app_id="sublime_text"] workspace number 2
 # mod+Shift+Return opens on workspace 7 with tmux
 
 # -- Autostart --
+exec eval $(gnome-keyring-daemon --start --components=secrets)
 exec mako
 exec gammastep-indicator
 exec blueman-applet
