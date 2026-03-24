@@ -77,12 +77,19 @@ RUN npm install -g @anthropic-ai/claude-code@latest
 
 
 USER root
+
+# Symlink host home so absolute paths in plugin registry resolve correctly
+ARG HOST_HOME=/home/ben
+RUN if [ "$HOST_HOME" != "/home/node" ]; then \
+  mkdir -p "$(dirname "$HOST_HOME")" && \
+  ln -sf /home/node "$HOST_HOME"; fi
+
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 DOCKERFILE
 
-  docker build -t "$CCC_IMAGE" "$CCC_DIR"
+  docker build --build-arg "HOST_HOME=$HOME" -t "$CCC_IMAGE" "$CCC_DIR"
 }
 
 # Build if image doesn't exist or --build flag passed
@@ -100,7 +107,7 @@ if [[ "$PWD" == "$HOME" ]]; then
   exit 1
 fi
 
-mkdir -p "$HOME/.claude/projects"
+mkdir -p "$HOME/.claude/projects" "$HOME/.claude/plugins"
 touch "$HOME/.claude/settings.json" "$HOME/.claude/CLAUDE.md" 2>/dev/null || true
 
 # Each container gets its own copy of session state to avoid conflicts,
@@ -120,6 +127,7 @@ docker_args=(
   -v "$CCC_TMP/.claude.json":/home/node/.claude.json
   # Mount memory, settings, and CLAUDE.md directly to host (shared, persistent)
   -v "$HOME/.claude/projects":/home/node/.claude/projects
+  -v "$HOME/.claude/plugins":/home/node/.claude/plugins
   -v "$HOME/.claude/settings.json":/home/node/.claude/settings.json
   -v "$HOME/.claude/CLAUDE.md":/home/node/.claude/CLAUDE.md
   -e CLAUDE_MODEL="${CLAUDE_MODEL:-}"
