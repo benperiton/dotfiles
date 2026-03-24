@@ -44,14 +44,10 @@ ENTRYPOINT
   cat > "$CCC_DIR/Dockerfile" <<'DOCKERFILE'
 FROM node:20
 
-ARG CLAUDE_CODE_VERSION=latest
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
   less git procps sudo fzf zsh man-db unzip gnupg2 gh jq nano vim \
   curl xz-utils gosu \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN mkdir -p /usr/local/share/npm-global && chown -R node:node /usr/local/share
 
 ENV DEVCONTAINER=true
 
@@ -60,6 +56,7 @@ RUN mkdir -p /workspace /home/node/.claude /home/node/.local/bin /home/node/.cac
 
 WORKDIR /workspace
 
+RUN mkdir -p /usr/local/share/npm-global && chown -R node:node /usr/local/share
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=/nix/var/nix/profiles/default/bin:/home/node/.local/bin:/usr/local/share/npm-global/bin:$PATH
 ENV SHELL=/bin/zsh
@@ -74,9 +71,10 @@ RUN curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/
 RUN curl -fsSL https://get.jetify.com/devbox | bash -s -- -f && \
   chmod a+rx /usr/local/bin/devbox
 
+# Install Claude Code via npm (native installer doesn't work in Docker)
 USER node
+RUN npm install -g @anthropic-ai/claude-code@latest
 
-RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 USER root
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -102,21 +100,28 @@ if [[ "$PWD" == "$HOME" ]]; then
   exit 1
 fi
 
-mkdir -p "$HOME/.claude"
+mkdir -p "$HOME/.claude/projects"
+touch "$HOME/.claude/settings.json" "$HOME/.claude/CLAUDE.md" 2>/dev/null || true
 
-# Each container gets its own copy of claude config to avoid conflicts
-# Credentials (read-only) and .claude dir are copied at startup
+# Each container gets its own copy of session state to avoid conflicts,
+# but memory and settings mount directly to the host so changes persist.
 CCC_TMP="$(mktemp -d)"
 trap 'rm -rf "$CCC_TMP"' EXIT
 cp "$HOME/.claude.json" "$CCC_TMP/.claude.json"
 cp -a "$HOME/.claude" "$CCC_TMP/.claude"
+# Remove memory from the copy — we'll mount the real one over it
+rm -rf "$CCC_TMP/.claude/projects"
 
 docker_args=(
   run -it --rm
-  -v "$PWD":/workspace
-  -w /workspace
+  -v "$PWD":"$PWD"
+  -w "$PWD"
   -v "$CCC_TMP/.claude":/home/node/.claude
   -v "$CCC_TMP/.claude.json":/home/node/.claude.json
+  # Mount memory, settings, and CLAUDE.md directly to host (shared, persistent)
+  -v "$HOME/.claude/projects":/home/node/.claude/projects
+  -v "$HOME/.claude/settings.json":/home/node/.claude/settings.json
+  -v "$HOME/.claude/CLAUDE.md":/home/node/.claude/CLAUDE.md
   -e CLAUDE_MODEL="${CLAUDE_MODEL:-}"
   -e HOST_UID="$(id -u)"
   -e HOST_GID="$(id -g)"
@@ -142,7 +147,7 @@ fi
 # If the project has devbox.json, bootstrap devbox then run claude inside it
 if [[ -f "$PWD/devbox.json" ]]; then
   exec docker "${docker_args[@]}" "$CCC_IMAGE" \
-    sh -c 'devbox install --quiet && devbox run -- claude --dangerously-skip-permissions "$@"' _ "$@"
+    sh -c 'devbox install --quiet && eval "$(devbox shellenv --pure=false)" && claude --dangerously-skip-permissions "$@"' _ "$@"
 else
   exec docker "${docker_args[@]}" "$CCC_IMAGE" claude --dangerously-skip-permissions "$@"
 fi
