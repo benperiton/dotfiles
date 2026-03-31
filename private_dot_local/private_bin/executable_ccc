@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ccc — ClaudeCodeConnect
+# Runs Claude Code in a sandboxed Docker container scoped to the current directory.
+# Uses Max plan OAuth auth — tokens persist via mounted ~/.claude.
+# Supports devbox projects — if devbox.json is found, installs and enters devbox shell.
+# Nix store is cached in a Docker volume so devbox packages persist between runs.
+#
+# Usage: ccc [claude args...]
+#   e.g. ccc
+#        ccc -p "fix the tests"
+#        ccc --resume
+#        ccc --build          # rebuild the image
+
+CCC_IMAGE="claude-code-sandbox"
+CCC_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/ccc"
+
+build_image() {
+  echo "Building $CCC_IMAGE image..."
+  mkdir -p "$CCC_DIR"
+
+  # Entrypoint script — runs as root, fixes permissions, drops to node
+  cat > "$CCC_DIR/entrypoint.sh" <<'ENTRYPOINT'
+#!/bin/bash
+set -e
+
+# Match host user's UID/GID if provided
+if [ -n "${HOST_UID:-}" ] && [ "$(id -u node)" != "$HOST_UID" ]; then
+  usermod -u "$HOST_UID" node 2>/dev/null || true
+  groupmod -g "${HOST_GID:-$HOST_UID}" node 2>/dev/null || true
+fi
+
+# Fix nix store ownership on first run (volume starts as root)
+chown -R node:node /nix 2>/dev/null || true
+chown -R node:node /home/node/.cache 2>/dev/null || true
+chown -R node:node /home/node/.claude 2>/dev/null || true
+
+# Drop to node user and run the command
+export HOME=/home/node
+exec gosu node "$@"
+ENTRYPOINT
+
+  cat > "$CCC_DIR/Dockerfile" <<'DOCKERFILE'
+FROM node:20
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  less git procps sudo fzf zsh man-db unzip gnupg2 gh jq nano vim \
+  curl xz-utils gosu \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV DEVCONTAINER=true
+
+RUN mkdir -p /workspace /home/node/.claude /home/node/.local/bin /home/node/.cache && \
+  chown -R node:node /workspace /home/node/.claude /home/node/.local /home/node/.cache
+
+WORKDIR /workspace
+
+RUN mkdir -p /usr/local/share/npm-global && chown -R node:node /usr/local/share
+ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
+ENV PATH=/nix/var/nix/profiles/default/bin:/home/node/.local/bin:/usr/local/share/npm-global/bin:$PATH
+ENV SHELL=/bin/zsh
+ENV NIX_CONF_DIR=/etc/nix
+
+# Install nix (single-user mode, no daemon)
+RUN curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | \
+  sh -s -- install linux --no-confirm --init none && \
+  chown -R node:node /nix
+
+# Install devbox
+RUN curl -fsSL https://get.jetify.com/devbox | bash -s -- -f && \
+  chmod a+rx /usr/local/bin/devbox
+
+# Install Claude Code via npm (native installer doesn't work in Docker)
+USER node
+RUN npm install -g @anthropic-ai/claude-code@latest
+
+
+USER root
+
+# Symlink host home so absolute paths in plugin registry resolve correctly
+ARG HOST_HOME=/home/ben
+RUN if [ "$HOST_HOME" != "/home/node" ]; then \
+  mkdir -p "$(dirname "$HOST_HOME")" && \
+  ln -sf /home/node "$HOST_HOME"; fi
+
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+DOCKERFILE
+
+  docker build --build-arg "HOST_HOME=$HOME" -t "$CCC_IMAGE" "$CCC_DIR"
+}
+
+# Build if image doesn't exist or --build flag passed
+if [[ "${1:-}" == "--build" ]]; then
+  build_image
+  shift
+  [[ $# -eq 0 ]] && exit 0
+elif ! docker image inspect "$CCC_IMAGE" &>/dev/null; then
+  build_image
+fi
+
+# Must be in a project directory
+if [[ "$PWD" == "$HOME" ]]; then
+  echo "Error: cd into a project first" >&2
+  exit 1
+fi
+
+mkdir -p "$HOME/.claude/projects" "$HOME/.claude/plugins"
+touch "$HOME/.claude/settings.json" "$HOME/.claude/CLAUDE.md" 2>/dev/null || true
+
+# Each container gets its own copy of session state to avoid conflicts,
+# but memory and settings mount directly to the host so changes persist.
+CCC_TMP="$(mktemp -d)"
+trap 'rm -rf "$CCC_TMP"' EXIT
+cp "$HOME/.claude.json" "$CCC_TMP/.claude.json"
+cp -a "$HOME/.claude" "$CCC_TMP/.claude"
+# Remove memory from the copy — we'll mount the real one over it
+rm -rf "$CCC_TMP/.claude/projects"
+
+docker_args=(
+  run -it --rm
+  -v "$PWD":"$PWD"
+  -w "$PWD"
+  -v "$CCC_TMP/.claude":/home/node/.claude
+  -v "$CCC_TMP/.claude.json":/home/node/.claude.json
+  # Mount memory, settings, and CLAUDE.md directly to host (shared, persistent)
+  -v "$HOME/.claude/projects":/home/node/.claude/projects
+  -v "$HOME/.claude/plugins":/home/node/.claude/plugins
+  -v "$HOME/.claude/settings.json":/home/node/.claude/settings.json
+  -v "$HOME/.claude/CLAUDE.md":/home/node/.claude/CLAUDE.md
+  -e CLAUDE_MODEL="${CLAUDE_MODEL:-}"
+  -e HOST_UID="$(id -u)"
+  -e HOST_GID="$(id -g)"
+  --hostname "claude-sandbox"
+  --memory 4g
+  --cpus 2
+)
+
+# Cache nix store and devbox state between runs
+docker_args+=(-v ccc-nix-store:/nix)
+docker_args+=(-v ccc-devbox-cache:/home/node/.cache)
+
+# Pass through git config for commits
+if [[ -f "$HOME/.gitconfig" ]]; then
+  docker_args+=(-v "$HOME/.gitconfig":/home/node/.gitconfig:ro)
+fi
+
+# Pass through SSH agent if available
+if [[ -n "${SSH_AUTH_SOCK:-}" ]]; then
+  docker_args+=(-v "$SSH_AUTH_SOCK":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent)
+fi
+
+# If the project has devbox.json, bootstrap devbox then run claude inside it
+if [[ -f "$PWD/devbox.json" ]]; then
+  exec docker "${docker_args[@]}" "$CCC_IMAGE" \
+    sh -c 'devbox install --quiet && eval "$(devbox shellenv --pure=false)" && claude --dangerously-skip-permissions "$@"' _ "$@"
+else
+  exec docker "${docker_args[@]}" "$CCC_IMAGE" claude --dangerously-skip-permissions "$@"
+fi
