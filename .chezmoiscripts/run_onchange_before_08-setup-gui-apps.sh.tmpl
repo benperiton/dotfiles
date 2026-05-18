@@ -24,13 +24,13 @@ COMMON_FLATPAKS=(
     com.usebruno.Bruno
     org.remmina.Remmina
     com.github.tchx84.Flatseal
+    md.obsidian.Obsidian
 )
 
 {{- if eq .machine_role "personal" }}
 ROLE_FLATPAKS=(
     net.cozic.joplin_desktop
     io.github.martchus.syncthingtray
-    md.obsidian.Obsidian
 )
 {{- else if eq .machine_role "work" }}
 ROLE_FLATPAKS=(
