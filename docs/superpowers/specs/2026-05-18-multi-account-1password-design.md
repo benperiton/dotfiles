@@ -199,7 +199,10 @@ personal-only so it always resolves to `ben-dotfiles`).
 ### `private_dot_local/private_bin/executable_dbc.tmpl`
 
 - Rename its op ref `op://ben-dotfiles/vpn/wg-home.name` →
-  `op://ben-dotfiles/dotfiles-vpn/wg-home.name`.
+  `printf "op://%s/dotfiles-vpn/wg-home.name" .df_vault` (use `.df_vault` for
+  uniformity with the WireGuard refs above; dbc is `.chezmoiignore`-excluded on
+  work and `.df_vault` is always `ben-dotfiles` on personal, so this is
+  equivalent in effect and consistent in form).
 - Exclude on work by adding to `.chezmoiignore`:
 
 ```
