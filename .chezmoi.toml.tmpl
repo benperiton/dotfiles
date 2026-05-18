@@ -4,9 +4,13 @@
 {{ $role_choices := list "personal" "work" }}
 {{ $machine_role := promptChoiceOnce . "machine_role" "What is the user of this machine?" $role_choices }}
 
+{{- $df_vault := "ben-dotfiles" }}
+{{- if eq $machine_role "work" }}{{ $df_vault = "Employee" }}{{ end }}
+
 [data]
 machine_type = {{ $machine_type | quote }}
 machine_role = {{ $machine_role | quote }}
+df_vault     = {{ $df_vault | quote }}
 
 [onepassword]
 mode = "account"
