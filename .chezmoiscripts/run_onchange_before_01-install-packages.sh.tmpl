@@ -34,6 +34,11 @@ GUI_PACKAGES=(
     gstreamer1-plugins-bad-freeworld
     gstreamer1-plugins-ugly
     gstreamer1-vaapi
+    # VS Code: installed via the Microsoft dnf repo (configured below), NOT as a
+    # Flatpak. The Flatpak build is sandboxed and breaks the integrated terminal,
+    # host toolchain/Docker access, and many extensions. Kept in GUI_PACKAGES
+    # (role-agnostic) so it lands on both personal and work GUI machines.
+    # See run_onchange_before_08-setup-gui-apps.sh.tmpl.
     code
 )
 {{- end }}

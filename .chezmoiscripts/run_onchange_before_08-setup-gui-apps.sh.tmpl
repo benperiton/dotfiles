@@ -10,6 +10,10 @@ if ! flatpak remotes | grep -q flathub; then
     sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 fi
 
+# NOTE: VS Code is intentionally NOT a Flatpak here. It is installed via the
+# Microsoft dnf repo in run_onchange_before_01-install-packages.sh.tmpl
+# (GUI_PACKAGES) because the Flatpak build is sandboxed and degrades the
+# integrated terminal, host toolchains/Docker, and many extensions.
 COMMON_FLATPAKS=(
     com.google.Chrome
     org.gimp.GIMP
