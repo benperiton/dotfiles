@@ -1,6 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-{{- if eq .machine_role "personal" }}
 
 # Skip if no wireless interface is available
 if ! nmcli device status | grep -q wifi; then
@@ -8,8 +7,8 @@ if ! nmcli device status | grep -q wifi; then
     exit 0
 fi
 
-WIFI_SSID={{ onepasswordRead "op://House/Tux/SSID" | quote }}
-WIFI_PASSWORD={{ onepasswordRead "op://House/Tux/Passkey" | quote }}
+WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/ssid" .df_vault) | quote }}
+WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/password" .df_vault) | quote }}
 
 # Check if connection already exists
 if nmcli connection show "$WIFI_SSID" &>/dev/null; then
@@ -28,4 +27,3 @@ nmcli connection add \
     connection.autoconnect yes
 
 echo "WiFi connection '$WIFI_SSID' created"
-{{- end }}
