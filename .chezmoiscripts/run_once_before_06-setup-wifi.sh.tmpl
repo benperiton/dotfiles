@@ -17,7 +17,7 @@ if nmcli connection show "$WIFI_SSID" &>/dev/null; then
 fi
 
 echo "Creating WiFi connection: $WIFI_SSID"
-nmcli connection add \
+sudo nmcli connection add \
     type wifi \
     con-name "$WIFI_SSID" \
     ssid "$WIFI_SSID" \
