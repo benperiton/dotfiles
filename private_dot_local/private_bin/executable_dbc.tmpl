@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DEVBOX="${DEVBOX:-devbox}"
-WG_IFACE="${WG_IFACE:-wg-{{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.name" }}}"
+WG_IFACE="${WG_IFACE:-wg-{{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.name" .df_vault) }}}"
 DEVBOX_MAC="${DEVBOX_MAC:-1C:1B:0D:A1:B5:76}"
 LAN_BROADCAST="${LAN_BROADCAST:-192.168.10.255}"
 WOL_RELAY="${WOL_RELAY:-192.168.10.254}"
