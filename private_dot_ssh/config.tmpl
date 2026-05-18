@@ -3,20 +3,28 @@
 AddKeysToAgent yes
 
 # -- Git --
+{{- if eq .machine_role "personal" }}
 
 Host github.com
     HostName github.com
     IdentityFile ~/.ssh/id_github
     User git
     IdentitiesOnly yes
+{{- else }}
 
+Host gitlab.com
+    HostName gitlab.com
+    IdentityFile ~/.ssh/id_gitlab
+    User git
+    IdentitiesOnly yes
+{{- end }}
 {{- if eq .machine_role "personal" }}
 
 # -- Home --
 
-{{ onepasswordRead "op://ben-dotfiles/ssh/config.home" }}
+{{ onepasswordRead "op://ben-dotfiles/dotfiles-ssh/config.home" }}
+{{- end }}
 
 # -- Servers --
 
-{{ onepasswordRead "op://ben-dotfiles/ssh/config.servers" }}
-{{- end }}
+{{ onepasswordRead (printf "op://%s/dotfiles-ssh/config.servers" .df_vault) }}
