@@ -47,23 +47,29 @@ Identical item names in both vaults; only contents differ.
 
 | item            | personal `ben-dotfiles`                                                                                              | work `Employee`                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `dotfiles-git`  | `name`, `email`                                                                                                     | `name`, `email` (work values)                    |
+| `dotfiles-git`  | `config.name`, `config.email`                                                                                       | `config.name`, `config.email` (work values)      |
 | `dotfiles-ssh`  | `config.home`, `config.servers`, `github.privatekey`, `github.publickey`, `skund-home.privatekey`, `skund-home.publickey`, `skund-edge.privatekey`, `skund-edge.publickey` | `config.servers`, `gitlab.privatekey`, `gitlab.publickey` |
 | `dotfiles-vpn`  | `wg-home.*` (all current `vpn` fields)                                                                               | — (work VPN added later, out of scope)           |
-| `dotfiles-wifi` | `ssid`, `password` (migrated from `op://House/Tux/SSID` + `Passkey`)                                                 | `ssid`, `password` (work network, WPA-PSK)       |
+| `dotfiles-wifi` | `SSID`, `Passkey` (migrated from `op://House/Tux/SSID` + `Passkey`)                                                  | `SSID`, `Passkey` (work network, WPA-PSK)        |
 
 Migration steps:
 
-1. Personal: rename item `git` → `dotfiles-git`, fields → `name`, `email`.
+1. Personal: rename item `git` → `dotfiles-git`, keep field names
+   (`config.name`, `config.email`).
 2. Personal: rename item `ssh` → `dotfiles-ssh`, keep existing field names
    (`config.home`, `config.servers`, `github.*`, `skund-home.*`,
    `skund-edge.*`).
 3. Personal: rename item `vpn` → `dotfiles-vpn`, keep `wg-home.*` fields.
-4. Personal: create item `dotfiles-wifi` with `ssid`, `password` copied from
-   `op://House/Tux/SSID` and `op://House/Tux/Passkey`.
-5. Work: create `dotfiles-git` (`name`, `email`), `dotfiles-ssh`
+4. Personal: create item `dotfiles-wifi` with `SSID`, `Passkey` copied from
+   `op://House/Tux/SSID` and `op://House/Tux/Passkey` (keep original field
+   names).
+5. Work: create `dotfiles-git` (`config.name`, `config.email`), `dotfiles-ssh`
    (`gitlab.privatekey`, `gitlab.publickey`, `config.servers`), `dotfiles-wifi`
-   (`ssid`, `password`).
+   (`SSID`, `Passkey`).
+
+**Field-name convention:** every `dotfiles-*` item preserves the original
+field names from the item it was copied from — nothing is renamed. This keeps
+the migration uniform and the templates simple.
 
 The `House` vault is no longer referenced by dotfiles after step 4; it is left
 in place for other uses.
@@ -114,8 +120,8 @@ unchanged; only `df_vault` is added.
 
 ```
 [user]
-    name  = {{ onepasswordRead (printf "op://%s/dotfiles-git/name"  .df_vault) | quote }}
-    email = {{ onepasswordRead (printf "op://%s/dotfiles-git/email" .df_vault) | quote }}
+    name  = {{ onepasswordRead (printf "op://%s/dotfiles-git/config.name"  .df_vault) | quote }}
+    email = {{ onepasswordRead (printf "op://%s/dotfiles-git/config.email" .df_vault) | quote }}
 ```
 
 No gating — both vaults have `dotfiles-git`. Fixes a current work breakage.
@@ -181,8 +187,8 @@ Remove the `{{- if eq .machine_role "personal" }}` gate. Read from the
 role-resolved vault:
 
 ```
-WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/ssid"     .df_vault) | quote }}
-WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/password" .df_vault) | quote }}
+WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/SSID"     .df_vault) | quote }}
+WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/Passkey" .df_vault) | quote }}
 ```
 
 The existing "no wifi interface, skip" guard still covers wired desktops.

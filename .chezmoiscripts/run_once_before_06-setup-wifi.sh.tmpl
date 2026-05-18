@@ -7,8 +7,8 @@ if ! nmcli device status | grep -q wifi; then
     exit 0
 fi
 
-WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/ssid" .df_vault) | quote }}
-WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/password" .df_vault) | quote }}
+WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/SSID" .df_vault) | quote }}
+WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/Passkey" .df_vault) | quote }}
 
 # Check if connection already exists
 if nmcli connection show "$WIFI_SSID" &>/dev/null; then

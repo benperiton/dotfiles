@@ -26,7 +26,7 @@ Therefore each code task (1–9) is verified with **deterministic static asserti
 A recurring helper — a pure-template logic eval (no data, no `op`):
 
 ```bash
-chezmoi execute-template '{{ printf "op://%s/dotfiles-git/name" "Employee" }}'   # -> op://Employee/dotfiles-git/name
+chezmoi execute-template '{{ printf "op://%s/dotfiles-git/config.name" "Employee" }}'   # -> op://Employee/dotfiles-git/config.name
 ```
 
 This proves a `printf` reference string is well-formed independent of role.
@@ -53,16 +53,16 @@ Create the new items in **both** vaults. Do **not** rename or delete anything ye
 
 **Personal vault `ben-dotfiles`** — copy values from the existing items:
 
-- `dotfiles-git`: `name` ← `op://ben-dotfiles/git/config.name`; `email` ← `op://ben-dotfiles/git/config.email`
+- `dotfiles-git`: `config.name`, `config.email` ← copied as-is from existing `op://ben-dotfiles/git/*` (keep original field names)
 - `dotfiles-ssh`: `config.home`, `config.servers`, `github.privatekey`, `github.publickey`, `skund-home.privatekey`, `skund-home.publickey`, `skund-edge.privatekey`, `skund-edge.publickey` ← the same-named fields of existing `op://ben-dotfiles/ssh/*`
 - `dotfiles-vpn`: `wg-home.name`, `wg-home.server-endpoint`, `wg-home.server-publickey`, `wg-home.client-dns`, `wg-home.client-privatekey`, `wg-home.client-address`, `wg-home.client-allowedips`, `wg-home.client-presharedkey` ← existing `op://ben-dotfiles/vpn/*`
-- `dotfiles-wifi`: `ssid` ← `op://House/Tux/SSID`; `password` ← `op://House/Tux/Passkey`
+- `dotfiles-wifi`: `SSID` ← `op://House/Tux/SSID`; `Passkey` ← `op://House/Tux/Passkey` (keep original field names)
 
 **Work vault `Employee`** — create:
 
-- `dotfiles-git`: `name`, `email` (work git identity)
+- `dotfiles-git`: `config.name`, `config.email` (work git identity)
 - `dotfiles-ssh`: `gitlab.privatekey`, `gitlab.publickey`, `config.servers` (free-form work `Host` blocks)
-- `dotfiles-wifi`: `ssid`, `password` (work WPA-PSK network)
+- `dotfiles-wifi`: `SSID`, `Passkey` (work WPA-PSK network)
 
 - [ ] **Step 1: Create the items above in both vaults**
 
@@ -72,8 +72,8 @@ Run on the personal machine (signed in to `op`):
 
 ```bash
 for ref in \
-  "op://ben-dotfiles/dotfiles-git/name" \
-  "op://ben-dotfiles/dotfiles-git/email" \
+  "op://ben-dotfiles/dotfiles-git/config.name" \
+  "op://ben-dotfiles/dotfiles-git/config.email" \
   "op://ben-dotfiles/dotfiles-ssh/config.home" \
   "op://ben-dotfiles/dotfiles-ssh/config.servers" \
   "op://ben-dotfiles/dotfiles-ssh/github.privatekey" \
@@ -83,8 +83,8 @@ for ref in \
   "op://ben-dotfiles/dotfiles-ssh/skund-edge.privatekey" \
   "op://ben-dotfiles/dotfiles-ssh/skund-edge.publickey" \
   "op://ben-dotfiles/dotfiles-vpn/wg-home.name" \
-  "op://ben-dotfiles/dotfiles-wifi/ssid" \
-  "op://ben-dotfiles/dotfiles-wifi/password"; do
+  "op://ben-dotfiles/dotfiles-wifi/SSID" \
+  "op://ben-dotfiles/dotfiles-wifi/Passkey"; do
   printf '%s -> ' "$ref"; op read "$ref" >/dev/null && echo OK || echo FAIL
 done
 ```
@@ -183,8 +183,8 @@ Old:
 New:
 
 ```
-    name  = {{ onepasswordRead (printf "op://%s/dotfiles-git/name"  .df_vault) | quote }}
-    email = {{ onepasswordRead (printf "op://%s/dotfiles-git/email" .df_vault) | quote }}
+    name  = {{ onepasswordRead (printf "op://%s/dotfiles-git/config.name"  .df_vault) | quote }}
+    email = {{ onepasswordRead (printf "op://%s/dotfiles-git/config.email" .df_vault) | quote }}
 ```
 
 - [ ] **Step 2: Static assertions**
@@ -193,13 +193,13 @@ Run:
 
 ```bash
 cd ~/.local/share/chezmoi
-rg -F 'printf "op://%s/dotfiles-git/name"'  dot_gitconfig.tmpl
-rg -F 'printf "op://%s/dotfiles-git/email"' dot_gitconfig.tmpl
+rg -F 'printf "op://%s/dotfiles-git/config.name"'  dot_gitconfig.tmpl
+rg -F 'printf "op://%s/dotfiles-git/config.email"' dot_gitconfig.tmpl
 rg -F 'op://ben-dotfiles/git/config' dot_gitconfig.tmpl && echo "OLD REF PRESENT — FAIL" || echo "old refs gone — OK"
-chezmoi execute-template '{{ printf "op://%s/dotfiles-git/name" "Employee" }}'
+chezmoi execute-template '{{ printf "op://%s/dotfiles-git/config.name" "Employee" }}'
 ```
 
-Expected: the two `rg -F` lines match (print the line), `old refs gone — OK`, final line `op://Employee/dotfiles-git/name`.
+Expected: the two `rg -F` lines match (print the line), `old refs gone — OK`, final line `op://Employee/dotfiles-git/config.name`.
 
 - [ ] **Step 3: Commit**
 
@@ -377,8 +377,8 @@ if ! nmcli device status | grep -q wifi; then
     exit 0
 fi
 
-WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/ssid" .df_vault) | quote }}
-WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/password" .df_vault) | quote }}
+WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/SSID" .df_vault) | quote }}
+WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/Passkey" .df_vault) | quote }}
 
 # Check if connection already exists
 if nmcli connection show "$WIFI_SSID" &>/dev/null; then
@@ -408,8 +408,8 @@ Run:
 ```bash
 cd ~/.local/share/chezmoi
 f=.chezmoiscripts/run_once_before_06-setup-wifi.sh.tmpl
-rg -F 'printf "op://%s/dotfiles-wifi/ssid" .df_vault' "$f"
-rg -F 'printf "op://%s/dotfiles-wifi/password" .df_vault' "$f"
+rg -F 'printf "op://%s/dotfiles-wifi/SSID" .df_vault' "$f"
+rg -F 'printf "op://%s/dotfiles-wifi/Passkey" .df_vault' "$f"
 rg -F 'wifi-sec.key-mgmt wpa-psk' "$f"
 rg -F 'eq .machine_role "personal"' "$f" && echo "ROLE GATE STILL PRESENT — FAIL" || echo "gate removed — OK"
 rg -F 'op://House/Tux' "$f" && echo "OLD REF PRESENT — FAIL" || echo "old refs gone — OK"
@@ -690,13 +690,13 @@ Run on the work machine:
 
 ```bash
 op whoami && for ref in \
-  "op://Employee/dotfiles-git/name" \
-  "op://Employee/dotfiles-git/email" \
+  "op://Employee/dotfiles-git/config.name" \
+  "op://Employee/dotfiles-git/config.email" \
   "op://Employee/dotfiles-ssh/gitlab.privatekey" \
   "op://Employee/dotfiles-ssh/gitlab.publickey" \
   "op://Employee/dotfiles-ssh/config.servers" \
-  "op://Employee/dotfiles-wifi/ssid" \
-  "op://Employee/dotfiles-wifi/password"; do
+  "op://Employee/dotfiles-wifi/SSID" \
+  "op://Employee/dotfiles-wifi/Passkey"; do
   printf '%s -> ' "$ref"; op read "$ref" >/dev/null && echo OK || echo FAIL
 done
 ```

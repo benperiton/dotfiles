@@ -1,6 +1,6 @@
 [user]
-    name  = {{ onepasswordRead (printf "op://%s/dotfiles-git/name"  .df_vault) | quote }}
-    email = {{ onepasswordRead (printf "op://%s/dotfiles-git/email" .df_vault) | quote }}
+    name  = {{ onepasswordRead (printf "op://%s/dotfiles-git/config.name"  .df_vault) | quote }}
+    email = {{ onepasswordRead (printf "op://%s/dotfiles-git/config.email" .df_vault) | quote }}
 
 [alias]
     squash-all = "!f(){ git reset $(git commit-tree HEAD^{tree} -m \"${1:-A new start}\");};f"
