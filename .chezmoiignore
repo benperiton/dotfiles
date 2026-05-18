@@ -4,3 +4,6 @@
 .config/gammastep
 .local/bin/sway-cheatsheet
 {{- end }}
+{{- if eq .machine_role "work" }}
+.local/bin/dbc
+{{- end }}
