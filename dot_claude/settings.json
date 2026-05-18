@@ -10,8 +10,11 @@
     "feature-dev@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true
   },
+  "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true,
   "gitAttribution": false,
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   }
