@@ -107,6 +107,9 @@ machine_role = {{ $machine_role | quote }}
 df_vault     = {{ $df_vault | quote }}
 ```
 
+The existing `[onepassword]` section (`mode = "account"`) is retained
+unchanged; only `df_vault` is added.
+
 ### `dot_gitconfig.tmpl`
 
 ```
@@ -188,10 +191,10 @@ Auth stays WPA-PSK for both roles.
 ### `.chezmoiscripts/run_once_before_07-setup-wireguard.sh.tmpl`
 
 Stays gated `{{- if and (eq .machine_role "personal") (eq .machine_type
-"laptop") }}`. Only change: `op://ben-dotfiles/vpn/wg-home.*` →
-`op://ben-dotfiles/dotfiles-vpn/wg-home.*` (literal `ben-dotfiles` is fine here
-since the branch is personal-only; `printf` with `.df_vault` is acceptable too
-for uniformity).
+"laptop") }}`. Only change: each `op://ben-dotfiles/vpn/wg-home.*` →
+`printf "op://%s/dotfiles-vpn/wg-home.<field>" .df_vault` (use `.df_vault` for
+uniformity with the rest of the changes, even though this branch is
+personal-only so it always resolves to `ben-dotfiles`).
 
 ### `private_dot_local/private_bin/executable_dbc.tmpl`
 
@@ -218,7 +221,7 @@ if ! op vault get ben-dotfiles &>/dev/null; then
 fi
 ```
 
-with a generic signed-in check, e.g.:
+with a generic signed-in check:
 
 ```
 if ! op whoami &>/dev/null; then
