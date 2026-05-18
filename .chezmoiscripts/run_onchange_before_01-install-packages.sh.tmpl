@@ -105,22 +105,42 @@ if [ ${#MISSING[@]} -gt 0 ]; then
     sudo dnf install -y --setopt=install_weak_deps=False "${MISSING[@]}"
 fi
 
+# Optional tools fetched from the internet. A failure here (e.g. a restricted
+# corporate network that blocks/inspects GitHub release downloads) must NOT
+# abort provisioning — warn and continue so the rest of the machine is still
+# set up. Each block runs in a subshell with its own errexit so a mid-block
+# failure stops that tool only.
+
 # Install Claude Code
 if ! command -v claude &>/dev/null; then
     echo "Installing Claude Code..."
-    curl -fsSL https://claude.ai/install.sh | bash
+    if ! ( set -eo pipefail; curl -fsSL https://claude.ai/install.sh | bash ); then
+        echo "WARNING: Claude Code install failed — skipping" >&2
+    fi
 fi
 
 # Install Devbox
 if ! command -v devbox &>/dev/null; then
     echo "Installing Devbox..."
-    curl -fsSL https://get.jetify.com/devbox | bash
+    if ! ( set -eo pipefail; curl -fsSL https://get.jetify.com/devbox | bash ); then
+        echo "WARNING: Devbox install failed — skipping" >&2
+    fi
 fi
 
-# Install Jujutsu (jj)
+# Install Jujutsu (jj) — to ~/.local/bin, no sudo
 if ! command -v jj &>/dev/null; then
     echo "Installing Jujutsu..."
-    JJ_VERSION=$(curl -fsSL https://api.github.com/repos/jj-vcs/jj/releases/latest | grep -m1 '"tag_name"' | cut -d'"' -f4)
-    mkdir -p ~/.local/bin
-    curl -fsSL "https://github.com/jj-vcs/jj/releases/download/${JJ_VERSION}/jj-${JJ_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar xz --strip-components=1 -C ~/.local/bin ./jj
+    if ! (
+        set -eo pipefail
+        JJ_VERSION=$(curl -fsSL https://api.github.com/repos/jj-vcs/jj/releases/latest | grep -m1 '"tag_name"' | cut -d'"' -f4)
+        [ -n "$JJ_VERSION" ] || { echo "could not determine jj version" >&2; exit 1; }
+        mkdir -p ~/.local/bin
+        tmp=$(mktemp)
+        trap 'rm -f "$tmp"' EXIT
+        curl -fsSL "https://github.com/jj-vcs/jj/releases/download/${JJ_VERSION}/jj-${JJ_VERSION}-x86_64-unknown-linux-musl.tar.gz" -o "$tmp"
+        gzip -t "$tmp"
+        tar xz --strip-components=1 -C ~/.local/bin -f "$tmp" ./jj
+    ); then
+        echo "WARNING: jj install failed (network/download blocked?) — skipping" >&2
+    fi
 fi
