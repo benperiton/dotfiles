@@ -32,9 +32,10 @@ fi
 echo "==> Signing in to 1Password..."
 eval "$(op signin)"
 
-# Verify we can access the vault
-if ! op vault get ben-dotfiles &>/dev/null; then
-    echo "ERROR: Cannot access ben-dotfiles vault. Check your 1Password account."
+# Verify we're signed in to 1Password (chezmoi pulls from the
+# role-appropriate vault during init)
+if ! op whoami &>/dev/null; then
+    echo "ERROR: Not signed in to 1Password. Run 'op signin' and retry."
     exit 1
 fi
 

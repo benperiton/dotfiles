@@ -14,15 +14,15 @@ fi
 
 CONF_DIR="/etc/wireguard"
 
-BASE_NAME="wg-{{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.name" }}"
+BASE_NAME="wg-{{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.name" .df_vault) }}"
 
-WG_SERVER_ENDPOINT={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.server-endpoint" | quote }}
-WG_SERVER_PUBLICKEY={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.server-publickey" | quote }}
-WG_CLIENT_DNS={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-dns" | quote }}
-WG_CLIENT_PRIVATEKEY={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-privatekey" | quote }}
-WG_CLIENT_ADDRESS={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-address" | quote }}
-WG_CLIENT_ALLOWED_IPS={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-allowedips" | quote }}
-WG_CLIENT_PRESHAREDKEY={{ onepasswordRead "op://ben-dotfiles/vpn/wg-home.client-presharedkey" | quote }}
+WG_SERVER_ENDPOINT={{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.server-endpoint" .df_vault) | quote }}
+WG_SERVER_PUBLICKEY={{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.server-publickey" .df_vault) | quote }}
+WG_CLIENT_DNS={{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.client-dns" .df_vault) | quote }}
+WG_CLIENT_PRIVATEKEY={{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.client-privatekey" .df_vault) | quote }}
+WG_CLIENT_ADDRESS={{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.client-address" .df_vault) | quote }}
+WG_CLIENT_ALLOWED_IPS={{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.client-allowedips" .df_vault) | quote }}
+WG_CLIENT_PRESHAREDKEY={{ onepasswordRead (printf "op://%s/dotfiles-vpn/wg-home.client-presharedkey" .df_vault) | quote }}
 
 sudo -v
 sudo install -d -m 700 "$CONF_DIR"
