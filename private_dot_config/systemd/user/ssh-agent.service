@@ -3,7 +3,9 @@ Description=SSH key agent
 
 [Service]
 Type=simple
+ExecStartPre=-/usr/bin/rm -f %t/ssh-agent.socket
 ExecStart=/usr/bin/ssh-agent -D -a %t/ssh-agent.socket
+ExecStartPost=/usr/bin/systemctl --user set-environment SSH_AUTH_SOCK=%t/ssh-agent.socket
 Restart=on-failure
 
 [Install]

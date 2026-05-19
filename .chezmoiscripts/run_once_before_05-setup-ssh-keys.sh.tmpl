@@ -5,14 +5,22 @@ SSH_DIR="$HOME/.ssh"
 mkdir -p "$SSH_DIR"
 chmod 700 "$SSH_DIR"
 
+# Compare-and-replace. This is a .tmpl, so rotating a key in 1Password
+# changes the rendered script and run_once re-runs it; the old
+# "skip if file exists" guard meant a rotated key never landed.
 write_key() {
     local file="$1"
     local content="$2"
     local perm="$3"
-    if [ ! -f "$file" ]; then
+    local tmp
+    tmp="$(mktemp "$SSH_DIR/.keytmp.XXXXXX")"
+    printf '%b\n' "$content" > "$tmp"
+    if [ ! -f "$file" ] || ! cmp -s "$tmp" "$file"; then
         echo "Writing $file"
-        printf '%b\n' "$content" > "$file"
-        chmod "$perm" "$file"
+        chmod "$perm" "$tmp"
+        mv -f "$tmp" "$file"
+    else
+        rm -f "$tmp"
     fi
 }
 {{- if eq .machine_role "personal" }}

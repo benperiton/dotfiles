@@ -31,15 +31,14 @@ tmp="$(mktemp)"
 cleanup() { rm -f "$tmp"; }
 trap cleanup EXIT
 
+# Build the desired conf, then compare. Returns 0 if it wrote/changed the
+# file, 1 if it was already up to date. This is a .tmpl, so a rotated key in
+# 1Password changes the rendered script and run_once re-runs it; the old
+# "skip if exists" guard meant rotations never reached /etc/wireguard.
 write_conf() {
   local name="$1"
   local allowed_ips="$2"
   local conf_path="${CONF_DIR}/${name}.conf"
-
-  if sudo test -f "$conf_path"; then
-    echo "${conf_path} already exists"
-    return 0
-  fi
 
   cat > "$tmp" <<EOF
 [Interface]
@@ -63,12 +62,19 @@ Endpoint = ${WG_SERVER_ENDPOINT}
 PersistentKeepalive = 25
 EOF
 
+  if sudo test -f "$conf_path" && sudo cmp -s "$tmp" "$conf_path"; then
+    echo "${conf_path} unchanged"
+    return 1
+  fi
+
   sudo install -m 600 "$tmp" "$conf_path"
   echo "Wrote ${conf_path}"
+  return 0
 }
 
 import_nm() {
   local name="$1"
+  local changed="${2:-0}"
   local conf_path="${CONF_DIR}/${name}.conf"
 
   if ! need_cmd nmcli; then
@@ -77,8 +83,12 @@ import_nm() {
   fi
 
   if nm_has_conn "$name"; then
-    echo "NetworkManager connection '$name' already exists"
-    return 0
+    if [ "$changed" != "1" ]; then
+      echo "NetworkManager connection '$name' already exists"
+      return 0
+    fi
+    echo "Re-importing changed '$name' into NetworkManager"
+    sudo nmcli connection delete "$name" >/dev/null 2>&1 || true
   fi
 
   sudo nmcli connection import type wireguard file "$conf_path"
@@ -87,13 +97,22 @@ import_nm() {
   echo "Imported '$name' into NetworkManager (autoconnect disabled)"
 }
 
+# write_conf returns non-zero when the conf is already up to date; under
+# `set -e` it must be used as a condition, which also tells import_nm
+# whether to re-import a changed profile.
 # Split tunnel
-write_conf "$BASE_NAME" "$WG_CLIENT_ALLOWED_IPS"
-import_nm "$BASE_NAME"
+if write_conf "$BASE_NAME" "$WG_CLIENT_ALLOWED_IPS"; then
+  import_nm "$BASE_NAME" 1
+else
+  import_nm "$BASE_NAME" 0
+fi
 
 # Full tunnel
-write_conf "${BASE_NAME}-all" "0.0.0.0/0, ::/0"
-import_nm "${BASE_NAME}-all"
+if write_conf "${BASE_NAME}-all" "0.0.0.0/0, ::/0"; then
+  import_nm "${BASE_NAME}-all" 1
+else
+  import_nm "${BASE_NAME}-all" 0
+fi
 
 echo ""
 echo "VPN profiles:"

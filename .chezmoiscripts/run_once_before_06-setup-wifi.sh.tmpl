@@ -10,20 +10,25 @@ fi
 WIFI_SSID={{ onepasswordRead (printf "op://%s/dotfiles-wifi/SSID" .df_vault) | quote }}
 WIFI_PASSWORD={{ onepasswordRead (printf "op://%s/dotfiles-wifi/Passkey" .df_vault) | quote }}
 
-# Check if connection already exists
+# Create or update. This is a .tmpl, so a rotated SSID/passkey in 1Password
+# changes the rendered script and run_once re-runs it; update the existing
+# profile's psk instead of skipping so a rotated password takes effect.
 if nmcli connection show "$WIFI_SSID" &>/dev/null; then
-    echo "WiFi connection '$WIFI_SSID' already configured"
-    exit 0
+    echo "Updating existing WiFi connection: $WIFI_SSID"
+    sudo nmcli connection modify "$WIFI_SSID" \
+        wifi-sec.key-mgmt wpa-psk \
+        wifi-sec.psk "$WIFI_PASSWORD" \
+        connection.autoconnect yes
+    echo "WiFi connection '$WIFI_SSID' updated"
+else
+    echo "Creating WiFi connection: $WIFI_SSID"
+    sudo nmcli connection add \
+        type wifi \
+        con-name "$WIFI_SSID" \
+        ssid "$WIFI_SSID" \
+        wifi-sec.key-mgmt wpa-psk \
+        wifi-sec.psk "$WIFI_PASSWORD" \
+        wifi.cloned-mac-address permanent \
+        connection.autoconnect yes
+    echo "WiFi connection '$WIFI_SSID' created"
 fi
-
-echo "Creating WiFi connection: $WIFI_SSID"
-sudo nmcli connection add \
-    type wifi \
-    con-name "$WIFI_SSID" \
-    ssid "$WIFI_SSID" \
-    wifi-sec.key-mgmt wpa-psk \
-    wifi-sec.psk "$WIFI_PASSWORD" \
-    wifi.cloned-mac-address permanent \
-    connection.autoconnect yes
-
-echo "WiFi connection '$WIFI_SSID' created"

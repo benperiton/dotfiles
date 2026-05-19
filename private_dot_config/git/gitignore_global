@@ -4,11 +4,12 @@ Thumbs.db
 Desktop.ini
 
 # Editors / IDEs
+# No global .idea/ or .vscode/ — many repos intentionally commit those, and
+# a global ignore silently prevents staging them everywhere. Let each repo's
+# own .gitignore decide.
 *.swp
 *.swo
 *~
-.idea/
-.vscode/
 *.sublime-project
 *.sublime-workspace
 
@@ -17,8 +18,9 @@ Desktop.ini
 .env.*
 
 # Dependencies
+# No global vendor/ — Go/Composer projects that commit vendored deps need it
+# tracked; this is a per-project decision.
 node_modules/
-vendor/
 __pycache__/
 *.pyc
 

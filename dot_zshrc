@@ -15,13 +15,18 @@ export POWERLEVEL9K_CONFIG_FILE="$HOME/.config/zsh/p10k.zsh"
 source "$HOME/.local/share/zsh/powerlevel10k/powerlevel10k.zsh-theme"
 
 # ENVS
-export TERM="xterm-256color"                      # getting proper colors
+# TERM is intentionally not set here — the terminal emulator advertises it
+# (alacritty/foot set their own + COLORTERM=truecolor); overriding it breaks
+# truecolor and tmux/ssh TERM negotiation.
 export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
 export EDITOR="nvim"
 export VISUAL="nvim"
 
 export PATH="$PATH:$HOME/.local/bin"
-export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
+# Only point at the agent socket if it actually exists, so a missing/down
+# ssh-agent.service degrades gracefully instead of every ssh/git op failing
+# against a dead socket path.
+[[ -S "${XDG_RUNTIME_DIR}/ssh-agent.socket" ]] && export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
 
 # Source config files
 for conf in "$HOME"/.config/zsh/*.zsh(N); do
@@ -34,7 +39,7 @@ source "$HOME/.local/share/zsh/zsh-z/zsh-z.plugin.zsh"
 source "$HOME/.local/share/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # Direnv
-eval "$(direnv hook zsh)"
+command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 
 # Jujutsu (jj) completions
-source <(COMPLETE=zsh jj)
+command -v jj &>/dev/null && source <(COMPLETE=zsh jj)
