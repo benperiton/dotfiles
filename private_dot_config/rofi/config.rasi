@@ -5,7 +5,6 @@ configuration {
     terminal: "alacritty";
     font: "FiraCode Nerd Font Mono 13";
     display-drun: "  Apps";
-    display-run: "  Run";
     display-combi: "  Launch";
 }
 

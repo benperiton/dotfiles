@@ -2,6 +2,7 @@
 bootstrap.sh
 docs
 CLAUDE.md
+.local/bin/README.md
 {{- if eq .machine_type "headless" }}
 .config/sway
 .config/waybar

@@ -1,7 +1,7 @@
 font=FiraCode Nerd Font Mono 10
-background-color=#282a36
-text-color=#f8f8f2
-border-color=#6272a4
+background-color=#282828
+text-color=#ebdbb2
+border-color=#d65d0e
 border-size=3
 border-radius=0
 padding=8
@@ -17,17 +17,17 @@ layer=overlay
 anchor=top-right
 
 [urgency=low]
-background-color=#282a36
-text-color=#6272a4
+background-color=#282828
+text-color=#928374
 default-timeout=10000
 
 [urgency=normal]
-background-color=#282a36
-text-color=#bd93f9
+background-color=#282828
+text-color=#ebdbb2
 default-timeout=20000
 
 [urgency=critical]
-background-color=#ff5555
-text-color=#f8f8f2
-border-color=#ff5555
+background-color=#cc241d
+text-color=#ebdbb2
+border-color=#fb4934
 default-timeout=0

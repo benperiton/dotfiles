@@ -25,15 +25,18 @@ alias cp='cp -i'
 alias mkdir='mkdir -p'
 
 # Replacements
-alias top='htop'
+alias top='btop'
 alias cat='bat --style=plain'
 alias grep='rg'
 alias ping='prettyping --nolegend'
-alias help='tldr'
-alias open='mimeo'
+alias open='xdg-open'
+# tldr is optional and not provisioned; only alias `help` when it exists so the
+# zsh run-help builtin keeps working when it doesn't.
+command -v tldr &>/dev/null && alias help='tldr'
 
 # Development
-alias lg='lazygit'
+# lazygit is optional and not provisioned; guard so `lg` isn't a dead alias.
+command -v lazygit &>/dev/null && alias lg='lazygit'
 alias vim='nvim'
 
 # Git
