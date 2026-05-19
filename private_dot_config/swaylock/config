@@ -1,2 +1,3 @@
 image=~/.local/share/lockscreen.jpg
-scaling=fill
+scaling=fit
+color=000000
