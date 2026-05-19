@@ -10,12 +10,15 @@ if ! flatpak remotes | grep -q flathub; then
     sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 fi
 
-# NOTE: VS Code is intentionally NOT a Flatpak here. It is installed via the
-# Microsoft dnf repo in run_onchange_before_01-install-packages.sh.tmpl
-# (GUI_PACKAGES) because the Flatpak build is sandboxed and degrades the
-# integrated terminal, host toolchains/Docker, and many extensions.
+# NOTE: Web browsers (Firefox, Google Chrome, Microsoft Edge) and VS Code are
+# intentionally NOT Flatpaks here. They are installed via dnf in
+# run_onchange_before_01-install-packages.sh.tmpl (GUI_PACKAGES): firefox and
+# code (VS Code) on all GUI machines; google-chrome-stable on personal machines
+# only; microsoft-edge-stable on work machines only (Chromium-based, so it
+# replaces Chrome on work). Flatpak builds are sandboxed and degrade host
+# integration (VS Code: integrated terminal, host toolchains/Docker,
+# extensions; browsers: native messaging, host file access).
 COMMON_FLATPAKS=(
-    com.google.Chrome
     org.gimp.GIMP
     org.inkscape.Inkscape
     com.sublimetext.three
@@ -35,7 +38,6 @@ ROLE_FLATPAKS=(
 {{- else if eq .machine_role "work" }}
 ROLE_FLATPAKS=(
     io.dbeaver.DBeaverCommunity
-    com.microsoft.Edge
 )
 {{- end }}
 
