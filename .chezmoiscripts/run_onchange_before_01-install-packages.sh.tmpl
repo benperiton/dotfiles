@@ -12,6 +12,7 @@ BASE_PACKAGES=(
     bat
     btop
     lsd
+    tealdeer
     direnv
     prettyping
     neovim
@@ -167,5 +168,24 @@ if ! command -v jj &>/dev/null; then
         tar xz --strip-components=1 -C ~/.local/bin -f "$tmp" ./jj
     ); then
         echo "WARNING: jj install failed (network/download blocked?) — skipping" >&2
+    fi
+fi
+
+# Install lazygit (not in Fedora repos): GitHub release to ~/.local/bin, no sudo
+if ! command -v lazygit &>/dev/null; then
+    echo "Installing lazygit..."
+    if ! (
+        set -eo pipefail
+        LG_TAG=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep -m1 '"tag_name"' | cut -d'"' -f4)
+        [ -n "$LG_TAG" ] || { echo "could not determine lazygit version" >&2; exit 1; }
+        LG_VER=${LG_TAG#v}
+        mkdir -p ~/.local/bin
+        tmp=$(mktemp)
+        trap 'rm -f "$tmp"' EXIT
+        curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/${LG_TAG}/lazygit_${LG_VER}_Linux_x86_64.tar.gz" -o "$tmp"
+        gzip -t "$tmp"
+        tar xz -C ~/.local/bin -f "$tmp" lazygit
+    ); then
+        echo "WARNING: lazygit install failed (network/download blocked?), skipping" >&2
     fi
 fi
