@@ -10,6 +10,18 @@
     exact = true
     refreshPeriod = "168h"
 
+# Aptos: Microsoft 365's default typeface since 2024 (replaced Calibri).
+# Official Microsoft Download Center zip - stable URL, full family
+# (Aptos / Display / Mono / Serif, all weights + italics). The other MS
+# fonts are not stable single archives so they live in
+# .chezmoiscripts/run_onchange_after_08-install-microsoft-fonts.sh instead.
+[".local/share/fonts/aptos"]
+    type = "archive"
+    url = "https://download.microsoft.com/download/8/6/0/860a94fa-7feb-44ef-ac79-c072d9113d69/Microsoft%20Aptos%20Fonts.zip"
+    exact = true
+    include = ["**/*.ttf", "**/*.TTF"]
+    refreshPeriod = "168h"
+
 [".local/bin/winbox"]
     type = "archive-file"
     url = "https://download.mikrotik.com/routeros/winbox/4.0.1/WinBox_Linux.zip"
