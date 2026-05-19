@@ -143,7 +143,7 @@ git rev-parse HEAD~1
 
 ## Manual follow-up (recorded for the user)
 
-After the next `chezmoi apply` on the work box (which runs script 01 then script 09): if that apply ran inside the graphical session the tray starts immediately; otherwise it starts at the next graphical login. The waybar `tray` module already renders it. `warp-cli connect|disconnect|status` remains the reliable control path; the tray is a convenience.
+After the next `chezmoi apply` on the work box (which runs script 01 then script 09): if that apply ran inside the graphical session the tray starts immediately; otherwise it starts at the next graphical login. The waybar `tray` module already renders it. `warp-cli connect|disconnect|status` remains the reliable control path; the tray is a convenience. On that first apply, also run `systemctl --user is-enabled warp-taskbar.service` and confirm it does not report `static` (it should report `enabled`); if it ever reports `static`, the enable-based approach in script 09 must be revisited (use `add-wants graphical-session.target` plus `start`).
 
 ## Self-Review
 

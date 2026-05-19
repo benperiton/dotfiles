@@ -108,3 +108,4 @@ non-graphical apply context would fail under `set -euo pipefail`.
 - No em-dash or en-dash anywhere in the file (user global rule).
 - `git mv` is used so file history is preserved; `chezmoi diff` shows only the
   rename + the appended block, no other file.
+- Assumption to confirm on the first real work-box apply (it cannot be checked here, since the package is work-only and absent on every machine in reach): `systemctl --user is-enabled warp-taskbar.service` must NOT report `static`. The enable-based approach relies on the unit having an `[Install]` section, which matches Cloudflare's documented setup (`systemctl --user enable --now warp-taskbar`; that command fails on a `static` unit, so the documented instruction itself is evidence the unit is enable-able). If it ever reports `static`, switch to `systemctl --user add-wants graphical-session.target warp-taskbar.service` plus a `start`, and replace the `is-enabled` guard with an `is-active` check.
