@@ -1,0 +1,30 @@
+#!/bin/bash
+set -euo pipefail
+{{- if eq .machine_role "work" }}
+
+# Cloudflare WARP tray suppression (work only). The rpm's %post enables and
+# starts the warp-desktop-svc *user* unit for every regular user -- it drives
+# the GTK/appindicator tray and the SSO webview behind the bogus webkit2gtk3
+# dep. We don't want the tray: WARP status lives in waybar (custom/vpn via
+# vpn-status.sh).
+#
+# This is deliberately a plain run_after_ (every apply), not run_once_/
+# run_onchange_: WARP is installed by script 01, which warn-and-continues, so
+# the apply that first installs WARP can differ from the one that first runs
+# this. A run_once_ keyed on content would have recorded itself as done on an
+# earlier apply while `rpm -q` was still false (mask skipped), then never run
+# again. Running every apply makes it converge regardless of ordering.
+#
+# Idempotent: the is-enabled check makes the mask a no-op once set, and a mask
+# (a /dev/null symlink) survives rpm upgrades that re-run the %post. The
+# systemctl --user calls are tolerated failing (|| true) so an apply over SSH
+# with no user bus doesn't abort -- the next in-session apply converges.
+# warp-svc (the system daemon) is intentionally left running (enabled by 01).
+if rpm -q cloudflare-warp &>/dev/null; then
+    systemctl --user stop warp-desktop-svc.service 2>/dev/null || true
+    if [ "$(systemctl --user is-enabled warp-desktop-svc.service 2>/dev/null || true)" != "masked" ]; then
+        echo "Masking warp-desktop-svc (WARP tray); status is in waybar"
+        systemctl --user mask warp-desktop-svc.service || true
+    fi
+fi
+{{- end }}
