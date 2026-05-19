@@ -13,27 +13,20 @@ for svc in ssh-agent.service tmux.service; do
 done
 {{- if eq .machine_role "work" }}
 
-# Cloudflare WARP tray (work only). The WARP install (script 01) is
-# warn-and-continue, so cloudflare-warp and its user unit may be absent on a
-# Fedora-incompatible box; the rpm -q guard prevents that from aborting this
-# script. add-wants graphical-session.target wires autostart whether
-# warp-taskbar.service ships with an [Install] section or as a static unit (a
-# plain enable would silently no-op on a static unit, since is-enabled then
-# returns 0), and it needs no display. add-wants is idempotent, so it runs
-# unconditionally whenever WARP is present rather than being gated on
-# is-active: a unit that is running but not yet wanted-by
-# graphical-session.target (started by hand, or by this script's own start
-# line on a prior run) would otherwise never get its autostart symlink. The
-# start is tolerated: although work machines are never headless, chezmoi apply
-# may run over SSH/TTY with no Wayland session, and the tray is only useful in
-# a graphical session, so on failure it autostarts at the next graphical login
-# via the wants symlink.
+# Cloudflare WARP tray suppression (work only). The rpm's %post enables and
+# starts the warp-desktop-svc *user* unit for every regular user -- that unit
+# drives the GTK/appindicator tray and the SSO webview behind the bogus
+# webkit2gtk3 dep. We don't want the tray: WARP status lives in waybar
+# (custom/vpn via vpn-status.sh). Stop + mask the unit; masking is a /dev/null
+# symlink that also survives rpm upgrades (which re-run that %post and would
+# otherwise re-enable it). Guarded on rpm -q so an absent/failed install can't
+# abort this script. warp-svc (the system daemon) is enabled by script 01 and
+# is intentionally left running.
 if rpm -q cloudflare-warp &>/dev/null; then
-    echo "Wiring warp-taskbar.service into graphical-session.target"
-    systemctl --user add-wants graphical-session.target warp-taskbar.service
-    if ! systemctl --user is-active warp-taskbar.service &>/dev/null; then
-        systemctl --user start warp-taskbar.service \
-            || echo "  (warp-taskbar will start at next graphical login)" >&2
+    systemctl --user stop warp-desktop-svc.service 2>/dev/null || true
+    if [ "$(systemctl --user is-enabled warp-desktop-svc.service 2>/dev/null)" != "masked" ]; then
+        echo "Masking warp-desktop-svc (WARP tray); status is in waybar"
+        systemctl --user mask warp-desktop-svc.service
     fi
 fi
 {{- end }}

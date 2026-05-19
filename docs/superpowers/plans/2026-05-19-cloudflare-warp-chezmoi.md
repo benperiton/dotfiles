@@ -1,5 +1,12 @@
 # Cloudflare WARP on the work machine Implementation Plan
 
+> **Revised 2026-05-19.** `dnf install` is unsatisfiable on F43: the rpm
+> hard-Requires the removed `webkit2gtk3`. The shipped implementation
+> downloads the rpm and installs it with `rpm -U --nodeps`, then
+> `systemctl enable --now warp-svc`; the GUI tray is masked and WARP status
+> is shown in waybar (`custom/vpn`). The task list below reflects the
+> original dnf design.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make chezmoi install the Cloudflare WARP client (`cloudflare-warp`) on work machines only, in an isolated warn-and-continue step, with enrollment left manual.

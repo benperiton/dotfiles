@@ -104,7 +104,7 @@
             "return-type": "json",
             "exec": "~/.config/waybar/vpn-status.sh",
             "interval": 5,
-            "on-click": "nm-connection-editor"
+            "on-click": "~/.config/waybar/warp-toggle.sh"
         },
         "battery": {
             "states": {

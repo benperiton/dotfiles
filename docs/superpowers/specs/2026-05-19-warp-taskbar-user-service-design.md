@@ -1,5 +1,11 @@
 # Cloudflare WARP tray (warp-taskbar) on work machines: design
 
+> **Superseded 2026-05-19.** The GUI tray approach was abandoned. Cloudflare's
+> rpm hard-Requires the removed `webkit2gtk3`, and the package ships no
+> `warp-taskbar.service` (the tray is the `warp-desktop-svc` user unit). WARP
+> is now installed via `rpm -U --nodeps`, the tray unit is *masked*, and
+> status lives in waybar (`custom/vpn`). Kept for history only.
+
 **Date:** 2026-05-19
 **Status:** Approved
 

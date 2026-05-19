@@ -1,5 +1,11 @@
 # Cloudflare WARP on the work machine: design
 
+> **Revised 2026-05-19.** `dnf install` is unsatisfiable on F43: the rpm
+> hard-Requires the removed `webkit2gtk3`. The shipped implementation
+> downloads the rpm and installs it with `rpm -U --nodeps`, then
+> `systemctl enable --now warp-svc`; the GUI tray is masked and WARP status
+> is shown in waybar (`custom/vpn`). The design below predates that pivot.
+
 **Date:** 2026-05-19
 **Status:** Approved
 

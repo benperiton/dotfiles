@@ -134,6 +134,10 @@ button:hover {
     color: #fabd2f;
 }
 
+#custom-vpn.connecting {
+    color: #fe8019;
+}
+
 /* ── Battery ───────────────────────────────────────────── */
 #battery {
     color: #ebdbb2;

@@ -1,5 +1,11 @@
 # Enable warp-taskbar user service on work machines Implementation Plan
 
+> **Superseded 2026-05-19.** The GUI tray approach was abandoned. Cloudflare's
+> rpm hard-Requires the removed `webkit2gtk3`, and the package ships no
+> `warp-taskbar.service` (the tray is the `warp-desktop-svc` user unit). WARP
+> is now installed via `rpm -U --nodeps`, the tray unit is *masked*, and
+> status lives in waybar (`custom/vpn`). Kept for history only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Revision (2026-05-19):** approach changed from `systemctl --user enable` (guarded by `! is-enabled`) to `systemctl --user add-wants graphical-session.target` (guarded by `! is-active`) after code-quality review showed the `enable` form silently no-ops if `warp-taskbar.service` ships `static`. See the spec's Revision note. This plan reflects the revised approach.
