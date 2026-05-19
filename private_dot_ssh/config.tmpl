@@ -3,21 +3,21 @@
 AddKeysToAgent yes
 
 # -- Git --
-{{- if eq .machine_role "personal" }}
+# Both stanzas are emitted on every machine so SSH "just works" for
+# whichever key is dropped in; an entry whose key file is absent is
+# harmless (ssh only uses it when you actually connect to that host).
 
 Host github.com
     HostName github.com
     IdentityFile ~/.ssh/id_github
     User git
     IdentitiesOnly yes
-{{- else }}
 
 Host gitlab.com
     HostName gitlab.com
     IdentityFile ~/.ssh/id_gitlab
     User git
     IdentitiesOnly yes
-{{- end }}
 {{- if eq .machine_role "personal" }}
 
 # -- Home --
