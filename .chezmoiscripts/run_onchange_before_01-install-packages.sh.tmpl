@@ -210,9 +210,10 @@ if ! rpm -q cloudflare-warp &>/dev/null; then
         fi
         tmp=$(mktemp -d)
         trap 'rm -rf "$tmp"' EXIT
-        dnf download --repo cloudflare-warp-stable --arch x86_64 --downloaddir="$tmp" cloudflare-warp
-        rpm -K "$tmp"/cloudflare-warp*.rpm   # GPG + digest verify (key imported above)
-        sudo rpm -U --nodeps "$tmp"/cloudflare-warp*.rpm
+        dnf download --repo cloudflare-warp-stable --arch x86_64 --destdir="$tmp" cloudflare-warp
+        rpm_file=$(echo "$tmp"/cloudflare-warp*.rpm)
+        rpm -K "$rpm_file"          # GPG + digest verify (key imported above)
+        sudo rpm -U --nodeps "$rpm_file"
         sudo systemctl enable --now warp-svc.service
     ); then
         echo "WARNING: cloudflare-warp install failed (network or packaging change?); skipping" >&2
