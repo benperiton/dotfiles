@@ -144,24 +144,29 @@ rg -cF '{{- if eq .machine_role "personal" }}' "$f"
 rg -cF '{{- else if eq .machine_role "work" }}' "$f"
 rg -F '/etc/yum.repos.d/google-chrome.repo' "$f"
 rg -F '/etc/yum.repos.d/microsoft-edge.repo' "$f"
-rg -n -F -e 'microsoft-edge"' -e ' microsoft-edge ' -e 'microsoft-edge\n' "$f" && echo "BARE microsoft-edge FOUND — FAIL" || echo "no bare microsoft-edge — OK"
+rg -n -e '^[[:space:]]*microsoft-edge[[:space:]]*$' "$f" && echo "BARE microsoft-edge PACKAGE LINE — FAIL" || echo "no bare microsoft-edge package line — OK"
 ```
 
-Expected: `firefox`, `google-chrome-stable`, `microsoft-edge-stable`, and both repo-file paths each print their matching line(s); the two `rg -cF` counts each print `3` — the personal/work branch now appears in three places: the pre-existing `ROLE_PACKAGES` block (unchanged), plus the two added by this task (the `GUI_PACKAGES` array and the repo-setup block); the last line prints `no bare microsoft-edge — OK` (the only occurrences of `microsoft-edge` are `microsoft-edge-stable`, the repo id `[microsoft-edge]` / `microsoft-edge.repo`, and `grep -q microsoft-edge` — none is the bare package name in a package array).
+(The bare-package check uses a line-anchored regex — `^\s*microsoft-edge\s*$` — not a fixed-string substring. The substring form gives a false positive because the `echo -e` repo definition legitimately contains the literal text `name=microsoft-edge\n`. Only a line that is *nothing but* `microsoft-edge` would be a bare package entry that breaks the `rpm -q` idempotency check, and that is what this asserts is absent.)
+
+Expected: `firefox`, `google-chrome-stable`, `microsoft-edge-stable`, and both repo-file paths each print their matching line(s); the two `rg -cF` counts each print `3` — the personal/work branch now appears in three places: the pre-existing `ROLE_PACKAGES` block (unchanged), plus the two added by this task (the `GUI_PACKAGES` array and the repo-setup block); the last line prints `no bare microsoft-edge package line — OK` (`microsoft-edge-stable` is the only package entry; every other `microsoft-edge` occurrence is the repo id `[microsoft-edge]`, `name=microsoft-edge`, `grep -q microsoft-edge`, or `microsoft-edge.repo`).
 
 - [ ] **Step 5: Render for the current (personal) role + syntax check**
 
 ```bash
 cd ~/.local/share/chezmoi
+rm -f /tmp/01rendered.sh
 chezmoi execute-template < .chezmoiscripts/run_onchange_before_01-install-packages.sh.tmpl > /tmp/01rendered.sh
 bash -n /tmp/01rendered.sh && echo "bash -n OK"
-rg -F -e 'firefox' -e 'google-chrome-stable' /tmp/01rendered.sh
-rg -F 'google-chrome.repo' /tmp/01rendered.sh
-rg -F 'microsoft-edge-stable' /tmp/01rendered.sh && echo "EDGE ON PERSONAL — FAIL" || echo "edge absent on personal — OK"
-rg -F 'microsoft-edge.repo' /tmp/01rendered.sh && echo "EDGE REPO ON PERSONAL — FAIL" || echo "edge repo absent on personal — OK"
+rg -n -e '^[[:space:]]*(firefox|google-chrome-stable)[[:space:]]*$' /tmp/01rendered.sh
+rg -qF 'dl.google.com/linux/chrome/rpm/stable' /tmp/01rendered.sh && echo "chrome repo present on personal — OK" || echo "CHROME REPO MISSING ON PERSONAL — FAIL"
+rg -n -e '^[[:space:]]*microsoft-edge-stable[[:space:]]*$' /tmp/01rendered.sh && echo "EDGE PACKAGE ON PERSONAL — FAIL" || echo "edge package absent on personal — OK"
+rg -qF 'packages.microsoft.com/yumrepos/edge' /tmp/01rendered.sh && echo "EDGE REPO ON PERSONAL — FAIL" || echo "edge repo block absent on personal — OK"
 ```
 
-Expected: `bash -n OK`; `firefox`, `google-chrome-stable`, and `google-chrome.repo` present in the personal render; `edge absent on personal — OK`; `edge repo absent on personal — OK`. (The work-gated `microsoft-edge-stable` line and Edge repo block are verified present in source by Step 4 and exercised on the work machine in Task 3.)
+(Package-entry checks are line-anchored — `^\s*<pkg>\s*$` — not substring greps, because the unconditional explanatory comment above `code` legitimately names `google-chrome-stable` and `microsoft-edge-stable`; a substring grep would match the comment on every role. Repo presence/absence is tested via each vendor's unique baseurl — `dl.google.com/linux/chrome/rpm/stable` for Chrome, `packages.microsoft.com/yumrepos/edge` for Edge — which appear only in the role-gated repo blocks, never in comments. Each check is a self-contained `&& … || …` so one failure can't break the chain.)
+
+Expected: `bash -n OK`; the line-anchored grep lists exactly `firefox` and `google-chrome-stable` as package entries; `chrome repo present on personal — OK`; `edge package absent on personal — OK`; `edge repo block absent on personal — OK`. (The work-gated `microsoft-edge-stable` package entry and Edge repo block are verified present in source by Step 4 and exercised on the work machine in Task 3.)
 
 - [ ] **Step 6: Commit**
 
