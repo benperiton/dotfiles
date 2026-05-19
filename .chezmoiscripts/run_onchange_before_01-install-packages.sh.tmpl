@@ -13,6 +13,7 @@ BASE_PACKAGES=(
     btop
     lsd
     tealdeer
+    lazygit
     direnv
     prettyping
     neovim
@@ -94,6 +95,13 @@ if ! dnf repolist | grep -q docker-ce; then
     sudo dnf config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
 fi
 
+# lazygit is not in the Fedora repos; enable the upstream-recommended COPR
+# (https://github.com/jesseduffield/lazygit#installation). Assumes the dnf
+# copr plugin is present, the same assumption the config-manager calls make.
+if ! dnf repolist | grep -q 'dejan:lazygit'; then
+    sudo dnf copr enable -y dejan/lazygit
+fi
+
 DOCKER_PACKAGES=(
     docker-ce
     docker-ce-cli
@@ -173,28 +181,5 @@ if ! command -v jj &>/dev/null; then
         tar xz --strip-components=1 -C ~/.local/bin -f "$tmp" ./jj
     ); then
         echo "WARNING: jj install failed (network/download blocked?) — skipping" >&2
-    fi
-fi
-
-# Install lazygit (not in Fedora repos): GitHub release to ~/.local/bin, no sudo
-if ! command -v lazygit &>/dev/null; then
-    echo "Installing lazygit..."
-    if ! (
-        set -eo pipefail
-        # Parse the tag from the full response (see jj note above: avoid
-        # `curl | grep -m1`, which trips pipefail via curl write error).
-        re='"tag_name"[[:space:]]*:[[:space:]]*"([^"]+)"'
-        lg_api=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest)
-        [[ $lg_api =~ $re ]] || { echo "could not determine lazygit version" >&2; exit 1; }
-        LG_TAG=${BASH_REMATCH[1]}
-        LG_VER=${LG_TAG#v}
-        mkdir -p ~/.local/bin
-        tmp=$(mktemp)
-        trap 'rm -f "$tmp"' EXIT
-        curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/${LG_TAG}/lazygit_${LG_VER}_Linux_x86_64.tar.gz" -o "$tmp"
-        gzip -t "$tmp"
-        tar xz -C ~/.local/bin -f "$tmp" lazygit
-    ); then
-        echo "WARNING: lazygit install failed (network/download blocked?), skipping" >&2
     fi
 fi
