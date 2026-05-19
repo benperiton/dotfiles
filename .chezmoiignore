@@ -10,3 +10,19 @@ docs
 {{- if eq .machine_role "work" }}
 .local/bin/dbc
 {{- end }}
+
+# Work laptop: deploy these defaults once, then never overwrite local changes.
+# stat-guarded — a path is only ignored *after* it already exists, so a fresh
+# work machine still gets the repo default on first apply, then it's frozen.
+# Personal machines never match this block, so they keep updating from the repo.
+{{ if eq .machine_role "work" }}
+{{   if stat (joinPath .chezmoi.homeDir ".local/share/wallpaper.jpg") }}
+.local/share/wallpaper.jpg
+{{   end }}
+{{   if stat (joinPath .chezmoi.homeDir ".local/share/lockscreen.jpg") }}
+.local/share/lockscreen.jpg
+{{   end }}
+{{   if stat (joinPath .chezmoi.homeDir ".local/share/loginscreen.jpg") }}
+.local/share/loginscreen.jpg
+{{   end }}
+{{ end }}
