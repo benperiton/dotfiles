@@ -1,6 +1,7 @@
 # Repo meta — never deploy to $HOME
 bootstrap.sh
 docs
+CLAUDE.md
 {{- if eq .machine_type "headless" }}
 .config/sway
 .config/waybar
