@@ -22,10 +22,10 @@ set $term alacritty
 # Recommends: rofi-wayland
 set $rofi_cmd rofi \
         -terminal '$term'
-# Shows a combined list of the applications with desktop files and
-# executables from PATH.
+# Shows a list of the applications with desktop files (PATH executables
+# excluded — drun only — to avoid duplicate launcher entries).
 # TODO: add window with the next release of rofi-wayland
-set $menu $rofi_cmd -show combi -combi-modes drun#run -modes combi
+set $menu $rofi_cmd -show combi -combi-modes drun -modes combi
 
 
 gaps inner 10

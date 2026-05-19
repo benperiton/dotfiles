@@ -1,6 +1,6 @@
 configuration {
     modi: "combi";
-    combi-modi: "drun,run";
+    combi-modi: "drun";
     show-icons: true;
     terminal: "alacritty";
     font: "FiraCode Nerd Font Mono 13";
