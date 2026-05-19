@@ -4,9 +4,15 @@ Documentation=man:tmux(1)
 
 [Service]
 Type=forking
-ExecStart=/usr/bin/tmux new-session -d
+ExecStart=/usr/bin/tmux new-session -d -s main
 ExecStop=/usr/bin/tmux kill-server
-KillMode=control-group
+# tmux daemonizes and re-parents away from the unit's cgroup, so let the
+# tmux-aware ExecStop do the shutdown instead of a cgroup-wide SIGKILL
+# (which would abruptly drop every pane on stop/restart).
+KillMode=none
+# Without an explicit Restart=, RestartSec below was dead config. on-failure
+# (not always) so a deliberate `systemctl --user stop` stays stopped.
+Restart=on-failure
 RestartSec=2
 
 [Install]
