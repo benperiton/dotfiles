@@ -158,8 +158,13 @@ if ! command -v jj &>/dev/null; then
     echo "Installing Jujutsu..."
     if ! (
         set -eo pipefail
-        JJ_VERSION=$(curl -fsSL https://api.github.com/repos/jj-vcs/jj/releases/latest | grep -m1 '"tag_name"' | cut -d'"' -f4)
-        [ -n "$JJ_VERSION" ] || { echo "could not determine jj version" >&2; exit 1; }
+        # Parse the tag from the full response (no `curl | grep -m1`: grep
+        # closes the pipe early, curl gets a write error, and pipefail then
+        # aborts the install spuriously).
+        re='"tag_name"[[:space:]]*:[[:space:]]*"([^"]+)"'
+        jj_api=$(curl -fsSL https://api.github.com/repos/jj-vcs/jj/releases/latest)
+        [[ $jj_api =~ $re ]] || { echo "could not determine jj version" >&2; exit 1; }
+        JJ_VERSION=${BASH_REMATCH[1]}
         mkdir -p ~/.local/bin
         tmp=$(mktemp)
         trap 'rm -f "$tmp"' EXIT
@@ -176,8 +181,12 @@ if ! command -v lazygit &>/dev/null; then
     echo "Installing lazygit..."
     if ! (
         set -eo pipefail
-        LG_TAG=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep -m1 '"tag_name"' | cut -d'"' -f4)
-        [ -n "$LG_TAG" ] || { echo "could not determine lazygit version" >&2; exit 1; }
+        # Parse the tag from the full response (see jj note above: avoid
+        # `curl | grep -m1`, which trips pipefail via curl write error).
+        re='"tag_name"[[:space:]]*:[[:space:]]*"([^"]+)"'
+        lg_api=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest)
+        [[ $lg_api =~ $re ]] || { echo "could not determine lazygit version" >&2; exit 1; }
+        LG_TAG=${BASH_REMATCH[1]}
         LG_VER=${LG_TAG#v}
         mkdir -p ~/.local/bin
         tmp=$(mktemp)
