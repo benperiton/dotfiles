@@ -40,9 +40,13 @@ if ! op whoami &>/dev/null; then
 fi
 
 # -- Chezmoi --
+# Install from the Fedora repos so it lands on PATH (/usr/bin) and is
+# kept current via `dnf upgrade`. The upstream get.chezmoi.io installer
+# defaults its bindir to $(pwd)/bin, which on Fedora is NOT on PATH
+# (only ~/.local/bin is), leaving chezmoi installed but unusable.
 if ! command -v chezmoi &>/dev/null; then
     echo "==> Installing chezmoi..."
-    sh -c "$(curl -fsSL https://get.chezmoi.io)"
+    sudo dnf install -y chezmoi
 fi
 
 # -- Init and apply --
