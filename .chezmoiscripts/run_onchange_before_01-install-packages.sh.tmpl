@@ -34,12 +34,21 @@ GUI_PACKAGES=(
     gstreamer1-plugins-bad-freeworld
     gstreamer1-plugins-ugly
     gstreamer1-vaapi
-    # VS Code: installed via the Microsoft dnf repo (configured below), NOT as a
-    # Flatpak. The Flatpak build is sandboxed and breaks the integrated terminal,
-    # host toolchain/Docker access, and many extensions. Kept in GUI_PACKAGES
-    # (role-agnostic) so it lands on both personal and work GUI machines.
-    # See run_onchange_before_08-setup-gui-apps.sh.tmpl.
+    # Browsers + VS Code: installed via dnf (Microsoft/Google repos configured
+    # below), NOT as Flatpaks. Flatpak builds are sandboxed and break host
+    # integration — VS Code: the integrated terminal, host toolchain/Docker,
+    # and many extensions; browsers: native messaging and host file access.
+    # firefox is role-agnostic (all GUI machines); google-chrome-stable is
+    # personal-only; microsoft-edge-stable is work-only (Chromium-based, so it
+    # replaces Chrome on work). The matching Flatpaks are removed in
+    # run_onchange_before_08-setup-gui-apps.sh.tmpl.
     code
+    firefox
+{{- if eq .machine_role "personal" }}
+    google-chrome-stable
+{{- else if eq .machine_role "work" }}
+    microsoft-edge-stable
+{{- end }}
 )
 {{- end }}
 
@@ -61,6 +70,21 @@ if ! dnf repolist | grep -q code; then
     sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
     echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null
 fi
+{{- if eq .machine_role "personal" }}
+
+# Google Chrome repo (personal machines only)
+if ! dnf repolist | grep -q google-chrome; then
+    sudo rpm --import https://dl.google.com/linux/linux_signing_key.pub
+    echo -e "[google-chrome]\nname=google-chrome\nbaseurl=https://dl.google.com/linux/chrome/rpm/stable/x86_64\nenabled=1\ngpgcheck=1\ngpgkey=https://dl.google.com/linux/linux_signing_key.pub" | sudo tee /etc/yum.repos.d/google-chrome.repo > /dev/null
+fi
+{{- else if eq .machine_role "work" }}
+
+# Microsoft Edge repo (work machines only)
+if ! dnf repolist | grep -q microsoft-edge; then
+    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+    echo -e "[microsoft-edge]\nname=microsoft-edge\nbaseurl=https://packages.microsoft.com/yumrepos/edge\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/microsoft-edge.repo > /dev/null
+fi
+{{- end }}
 {{- end }}
 
 # Docker repo (needed for docker-ce packages)
