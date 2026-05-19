@@ -183,3 +183,27 @@ if ! command -v jj &>/dev/null; then
         echo "WARNING: jj install failed (network/download blocked?) — skipping" >&2
     fi
 fi
+{{- if eq .machine_role "work" }}
+
+# Cloudflare WARP (Zero Trust client). Fedora is community-supported, not
+# officially supported by Cloudflare, so the package is installed here in its
+# own warn-and-continue subshell rather than in the dnf batch: a future
+# Fedora-incompatible build (or a restricted network) must not abort the whole
+# package pass. The RPM repo uses a fixed path (no $releasever), so the usual
+# Fedora release-mismatch 404 does not apply. Enrollment is manual and via SSO
+# (warp-cli teams-enroll <team>; warp-cli connect), intentionally not scripted,
+# so no org name or secret lives in the repo (the box is not in MDM).
+if ! rpm -q cloudflare-warp &>/dev/null; then
+    echo "Installing Cloudflare WARP..."
+    if ! (
+        set -eo pipefail
+        if ! dnf repolist | grep -q cloudflare-warp; then
+            sudo rpm --import https://pkg.cloudflareclient.com/pubkey.gpg
+            echo -e "[cloudflare-warp-stable]\nname=cloudflare-warp\nbaseurl=https://pkg.cloudflareclient.com/rpm\nenabled=1\ntype=rpm\ngpgcheck=1\ngpgkey=https://pkg.cloudflareclient.com/pubkey.gpg" | sudo tee /etc/yum.repos.d/cloudflare-warp.repo > /dev/null
+        fi
+        sudo dnf install -y cloudflare-warp
+    ); then
+        echo "WARNING: cloudflare-warp install failed (Fedora unsupported or network?); skipping" >&2
+    fi
+fi
+{{- end }}
