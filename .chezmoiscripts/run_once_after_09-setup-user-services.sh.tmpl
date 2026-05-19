@@ -16,15 +16,17 @@ done
 # Cloudflare WARP tray (work only). The WARP install (script 01) is
 # warn-and-continue, so cloudflare-warp and its user unit may be absent on a
 # Fedora-incompatible box; the rpm -q guard prevents that from aborting this
-# script. systemctl --user enable needs no display and is idempotent. The
-# start is tolerated: although work machines are never headless, chezmoi apply
-# may run over SSH/TTY with no Wayland session, and the tray is only useful in
-# a graphical session, so on failure it autostarts at the next graphical login
-# (the unit is enabled regardless).
+# script. add-wants graphical-session.target wires autostart whether
+# warp-taskbar.service ships with an [Install] section or as a static unit (a
+# plain enable would silently no-op on a static unit, since is-enabled then
+# returns 0), and it needs no display. The start is tolerated: although work
+# machines are never headless, chezmoi apply may run over SSH/TTY with no
+# Wayland session, and the tray is only useful in a graphical session, so on
+# failure it autostarts at the next graphical login via the wants symlink.
 if rpm -q cloudflare-warp &>/dev/null \
-     && ! systemctl --user is-enabled warp-taskbar.service &>/dev/null; then
-    echo "Enabling warp-taskbar.service"
-    systemctl --user enable warp-taskbar.service
+     && ! systemctl --user is-active warp-taskbar.service &>/dev/null; then
+    echo "Wiring warp-taskbar.service into graphical-session.target"
+    systemctl --user add-wants graphical-session.target warp-taskbar.service
     systemctl --user start warp-taskbar.service \
         || echo "  (warp-taskbar will start at next graphical login)" >&2
 fi
