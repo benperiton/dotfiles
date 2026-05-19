@@ -130,5 +130,10 @@ exec mako
 exec gammastep-indicator
 exec blueman-applet
 
+# Idle timeouts (consumed by stock /usr/share/sway/config.d/90-swayidle.conf):
+# lock after 10 min, then power displays off 5 min later (= 15 min idle).
+set $lock_timeout 600
+set $screen_timeout 300
+
 # Fedora layered includes (swayidle, bar, media keys, etc.)
 include '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "/etc/sway/config.d/*.conf" "${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/*.conf")'
