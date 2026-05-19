@@ -197,7 +197,7 @@ if ! rpm -q cloudflare-warp &>/dev/null; then
     echo "Installing Cloudflare WARP..."
     if ! (
         set -eo pipefail
-        if ! dnf repolist | grep -q cloudflare-warp; then
+        if [ ! -f /etc/yum.repos.d/cloudflare-warp.repo ]; then
             sudo rpm --import https://pkg.cloudflareclient.com/pubkey.gpg
             echo -e "[cloudflare-warp-stable]\nname=cloudflare-warp\nbaseurl=https://pkg.cloudflareclient.com/rpm\nenabled=1\ntype=rpm\ngpgcheck=1\ngpgkey=https://pkg.cloudflareclient.com/pubkey.gpg" | sudo tee /etc/yum.repos.d/cloudflare-warp.repo > /dev/null
         fi

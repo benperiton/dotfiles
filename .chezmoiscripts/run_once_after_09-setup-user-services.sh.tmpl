@@ -19,16 +19,22 @@ done
 # script. add-wants graphical-session.target wires autostart whether
 # warp-taskbar.service ships with an [Install] section or as a static unit (a
 # plain enable would silently no-op on a static unit, since is-enabled then
-# returns 0), and it needs no display. The start is tolerated: although work
-# machines are never headless, chezmoi apply may run over SSH/TTY with no
-# Wayland session, and the tray is only useful in a graphical session, so on
-# failure it autostarts at the next graphical login via the wants symlink.
-if rpm -q cloudflare-warp &>/dev/null \
-     && ! systemctl --user is-active warp-taskbar.service &>/dev/null; then
+# returns 0), and it needs no display. add-wants is idempotent, so it runs
+# unconditionally whenever WARP is present rather than being gated on
+# is-active: a unit that is running but not yet wanted-by
+# graphical-session.target (started by hand, or by this script's own start
+# line on a prior run) would otherwise never get its autostart symlink. The
+# start is tolerated: although work machines are never headless, chezmoi apply
+# may run over SSH/TTY with no Wayland session, and the tray is only useful in
+# a graphical session, so on failure it autostarts at the next graphical login
+# via the wants symlink.
+if rpm -q cloudflare-warp &>/dev/null; then
     echo "Wiring warp-taskbar.service into graphical-session.target"
     systemctl --user add-wants graphical-session.target warp-taskbar.service
-    systemctl --user start warp-taskbar.service \
-        || echo "  (warp-taskbar will start at next graphical login)" >&2
+    if ! systemctl --user is-active warp-taskbar.service &>/dev/null; then
+        systemctl --user start warp-taskbar.service \
+            || echo "  (warp-taskbar will start at next graphical login)" >&2
+    fi
 fi
 {{- end }}
 
