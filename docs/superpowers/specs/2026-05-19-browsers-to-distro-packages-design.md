@@ -13,8 +13,12 @@ Google Chrome and Microsoft Edge are installed as Flatpaks by
 
 We want both as native distro (dnf) packages instead, following the pattern
 VS Code already uses (`code` via the Microsoft dnf repo in
-`run_onchange_before_01-install-packages.sh.tmpl`), while preserving the
-existing work/personal split. Separately, Firefox is currently not declared
+`run_onchange_before_01-install-packages.sh.tmpl`). The work/personal split is
+also tightened: Chrome becomes **personal-only** (it was previously on work
+machines too, as a common Flatpak) because Microsoft Edge is Chromium-based
+and already covers the Chromium use case on the work machine. So the resulting
+split is: Firefox on all GUI machines, Chrome on personal GUI machines only,
+Edge on work GUI machines only. Separately, Firefox is currently not declared
 anywhere; the Sway-based minimal install does not guarantee it, so it should
 be installed explicitly on all GUI machines.
 
@@ -36,31 +40,32 @@ GUI block, extend `GUI_PACKAGES`:
 GUI_PACKAGES=(
     … existing …
     code
-    firefox                  # Fedora main repo — no extra repo needed
-    google-chrome-stable     # Google repo — all GUI machines
-{{- if eq .machine_role "work" }}
+    firefox                  # Fedora main repo — all GUI machines
+{{- if eq .machine_role "personal" }}
+    google-chrome-stable     # Google repo — personal only
+{{- else if eq .machine_role "work" }}
     microsoft-edge-stable    # Microsoft Edge repo — work only
 {{- end }}
 )
 ```
 
-- `firefox` and `google-chrome-stable` land on every GUI machine (personal +
-  work), like `code`.
-- `microsoft-edge-stable` is nested behind the work-role conditional so it
-  stays work-only.
+- `firefox` lands on every GUI machine (personal + work), like `code`.
+- `google-chrome-stable` is gated to the personal role; `microsoft-edge-stable`
+  to the work role — mirroring the personal/work branch pattern already used
+  for `ROLE_FLATPAKS` in script `08` and `ROLE_PACKAGES` in script `01`.
 - All three are real RPM names, so the existing `rpm -q "$pkg"` missing-loop
   stays idempotent. The bare virtual name `microsoft-edge` is never used.
 
 **Repo setup** — in the same GUI block that already configures the RPM Fusion
 and VS Code repos, mirroring that exact pattern:
 
-- **Google Chrome** (all GUI machines):
+- **Google Chrome** (wrapped in `{{ if eq .machine_role "personal" }}`):
   `if ! dnf repolist | grep -q google-chrome` →
   `sudo rpm --import https://dl.google.com/linux/linux_signing_key.pub`, then
   write `/etc/yum.repos.d/google-chrome.repo` with baseurl
   `https://dl.google.com/linux/chrome/rpm/stable/x86_64`, `enabled=1`,
   `gpgcheck=1`, `gpgkey=https://dl.google.com/linux/linux_signing_key.pub`.
-- **Microsoft Edge** (wrapped in `{{ if eq .machine_role "work" }}`):
+- **Microsoft Edge** (in the `{{ else if eq .machine_role "work" }}` branch):
   `if ! dnf repolist | grep -q microsoft-edge` →
   `sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc` (same
   key VS Code already trusts; `rpm --import` is idempotent), then write
@@ -90,8 +95,8 @@ Net effect by machine:
 
 | machine | change |
 | --- | --- |
-| personal GUI | Chrome + Firefox now via dnf; Chrome Flatpak no longer installed |
-| work GUI | Chrome + Firefox + Edge now via dnf; Chrome & Edge Flatpaks no longer installed |
+| personal GUI | Firefox + Chrome now via dnf; Chrome Flatpak no longer installed |
+| work GUI | Firefox + Edge now via dnf; **Chrome no longer installed at all** (was a common Flatpak; Edge is Chromium-based and replaces it); Chrome & Edge Flatpaks no longer installed |
 | any headless | unchanged (no browsers; both scripts still no-op) |
 
 ## Out of scope
@@ -109,8 +114,8 @@ Net effect by machine:
 `chezmoi execute-template` renders of both scripts for **personal-desktop**
 and **work-desktop**, asserting:
 
-- Chrome (`google-chrome-stable`) and `firefox` present in the script `01`
-  render for both roles.
+- `firefox` present in the script `01` render for both roles.
+- `google-chrome-stable` present in the personal render only; absent in work.
 - `microsoft-edge-stable` present in the work render only; absent in personal.
 - The bare string `microsoft-edge` (without `-stable`) appears nowhere in the
   rendered script `01`.
