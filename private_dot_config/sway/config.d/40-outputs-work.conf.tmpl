@@ -1,0 +1,21 @@
+{{- if eq .machine_role "work" -}}
+# Office dock: two identical Dell U2417Hs, pinned by serial because the same
+# make+model can't be disambiguated otherwise. Position is fixed so the layout
+# is stable across reconnects.
+output "Dell Inc. DELL U2417H 5K9YD88IAS0L" pos 0    0
+output "Dell Inc. DELL U2417H 5K9YD8B7CYZW" pos 1920 0
+
+# Workspaces 1-5 prefer the LEFT Dell, 6-10 prefer the RIGHT Dell. Fall back
+# to eDP-1 when undocked. Sway auto-migrates workspaces when a preferred
+# output appears or disappears.
+workspace 1  output "Dell Inc. DELL U2417H 5K9YD88IAS0L" eDP-1
+workspace 2  output "Dell Inc. DELL U2417H 5K9YD88IAS0L" eDP-1
+workspace 3  output "Dell Inc. DELL U2417H 5K9YD88IAS0L" eDP-1
+workspace 4  output "Dell Inc. DELL U2417H 5K9YD88IAS0L" eDP-1
+workspace 5  output "Dell Inc. DELL U2417H 5K9YD88IAS0L" eDP-1
+workspace 6  output "Dell Inc. DELL U2417H 5K9YD8B7CYZW" eDP-1
+workspace 7  output "Dell Inc. DELL U2417H 5K9YD8B7CYZW" eDP-1
+workspace 8  output "Dell Inc. DELL U2417H 5K9YD8B7CYZW" eDP-1
+workspace 9  output "Dell Inc. DELL U2417H 5K9YD8B7CYZW" eDP-1
+workspace 10 output "Dell Inc. DELL U2417H 5K9YD8B7CYZW" eDP-1
+{{- end -}}
