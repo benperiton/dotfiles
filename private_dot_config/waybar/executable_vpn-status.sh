@@ -37,12 +37,17 @@ if command -v warp-cli >/dev/null 2>&1; then
                 emit "$LOCK_SHUT WARP Connecting" "connecting" "WARP: Connecting"
                 exit 0
             fi
-            MODE_LINE=$(warp-cli settings 2>/dev/null \
-                | awk -F': ' '/Split Tunnel mode/ {print $2; exit}')
-            case "$MODE_LINE" in
-                *include*) MODE="split tunnel"; EGRESS="egress via local ISP (split tunnel)" ;;
-                *exclude*) MODE="full tunnel";  EGRESS="egress via WARP" ;;
-                *)         MODE="";             EGRESS="" ;;
+            # warp-cli settings prints "Include mode, with hosts/ips:" for
+            # split tunnel (only listed routes go via WARP) and "Exclude mode"
+            # for the reverse (everything except listed routes goes via WARP,
+            # i.e. full tunnel). No literal "Split Tunnel mode" key exists.
+            MODE=$(warp-cli settings 2>/dev/null | awk '
+                /Include mode/ {print "split tunnel"; exit}
+                /Exclude mode/ {print "full tunnel";  exit}')
+            case "$MODE" in
+                "split tunnel") EGRESS="egress via local ISP (split tunnel)" ;;
+                "full tunnel")  EGRESS="egress via WARP" ;;
+                *)              EGRESS="" ;;
             esac
             MODE_TAG=""
             [ -n "$MODE" ] && MODE_TAG=" ($MODE)"
