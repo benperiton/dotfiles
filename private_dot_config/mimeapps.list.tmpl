@@ -1,0 +1,10 @@
+[Default Applications]
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+{{- if eq .machine_role "work" }}
+text/html=microsoft-edge.desktop
+application/xhtml+xml=microsoft-edge.desktop
+x-scheme-handler/http=microsoft-edge.desktop
+x-scheme-handler/https=microsoft-edge.desktop
+x-scheme-handler/about=microsoft-edge.desktop
+x-scheme-handler/unknown=microsoft-edge.desktop
+{{- end }}
