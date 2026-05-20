@@ -129,6 +129,11 @@ exec eval $(gnome-keyring-daemon --start --components=secrets)
 exec mako
 exec gammastep-indicator
 exec blueman-applet
+# waybar runs as a layer-shell client (not via Fedora's bar { swaybar_command }
+# in /usr/share/sway/config.d/90-bar.conf, which we override with an empty
+# file in config.d/90-bar.conf so the multi-bar array in waybar's config.jsonc
+# is interpreted correctly and surfaces are bound to outputs cleanly).
+exec waybar
 
 # Idle timeouts (consumed by stock /usr/share/sway/config.d/90-swayidle.conf):
 # lock after 10 min, then power displays off 5 min later (= 15 min idle).
