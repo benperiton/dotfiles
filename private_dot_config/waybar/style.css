@@ -135,7 +135,7 @@ button:hover {
 }
 
 #custom-vpn.connecting {
-    color: #fe8019;
+    color: #fe8019;   /* gruvbox orange, matches existing mode highlight */
 }
 
 /* ── Battery ───────────────────────────────────────────── */
