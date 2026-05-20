@@ -124,6 +124,7 @@
             "return-type": "json",
             "exec": "~/.config/waybar/vpn-status.sh",
             "interval": 5,
+            "signal": 8,
             "on-click": "~/.config/waybar/warp-toggle.sh"
         },
         "battery": {
