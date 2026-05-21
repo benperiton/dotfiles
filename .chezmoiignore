@@ -3,6 +3,10 @@ bootstrap.sh
 docs
 CLAUDE.md
 .local/bin/README.md
+# One-off provisioning script for the Dell XPS work laptop (LAP-TEC-00103): sets
+# up hibernation/suspend-then-hibernate (no S3 firmware). Kept in the repo as a
+# reminder + record; run manually with `sudo bash setup-hibernate.sh`, not deployed.
+setup-hibernate.sh
 {{- if eq .machine_type "headless" }}
 .config/sway
 .config/waybar
