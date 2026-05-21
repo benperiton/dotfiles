@@ -186,37 +186,48 @@ fi
 {{- if eq .machine_role "work" }}
 
 # Cloudflare WARP (Zero Trust client). Fedora is community-supported, not
-# officially supported by Cloudflare. The current RPM hard-Requires
-# webkit2gtk3, which Fedora removed (F43 ships only webkit2gtk4.1 /
-# webkitgtk6.0), so `dnf install` is unsatisfiable. None of the WARP binaries
-# (warp-svc, warp-cli, warp-taskbar) actually link libwebkit2gtk -- it is an
-# over-declared packaging dep for an SSO webview -- so the daemon + CLI work
-# without it. We therefore download the rpm and install it with
-# `rpm -U --nodeps`. Tradeoff: dnf will not auto-upgrade WARP; bump it by
-# removing the package and re-applying, or `rpm -U --nodeps` a newer download.
-# The whole block is a warn-and-continue subshell so a network failure or a
-# future packaging change can't abort the package pass. Enrollment stays
-# manual via SSO (warp-cli teams-enroll <team>; warp-cli connect),
-# intentionally not scripted, so no org name or secret lives in the repo (the
-# box is not in MDM). The GUI tray (warp-desktop-svc user unit) is masked in
-# script 09; WARP status lives in waybar (custom/vpn) instead.
-if ! rpm -q cloudflare-warp &>/dev/null; then
-    echo "Installing Cloudflare WARP (rpm --nodeps; webkit2gtk3 dep is bogus)..."
+# officially supported by Cloudflare. The latest rpm hard-Requires webkit2gtk3,
+# which Fedora 43 removed (it ships webkit2gtk4.1 / webkitgtk6.0), so installing
+# the latest is unsatisfiable. We instead pin a vetted older build whose Requires
+# are only ca-certificates, dbus, desktop-file-utils, glibc, iproute, libpcap,
+# nftables and nss-tools -- all in Fedora's stock repos -- so it installs cleanly
+# with normal dependency resolution (no --nodeps).
+#
+# The pinned artifact is fetched directly from downloads.cloudflareclient.com and
+# is NOT GPG-signed (rpm -Kv shows digests only; all signature headers are none),
+# so we verify it against a pinned SHA256 instead of a signature. No signed copy
+# of this clean version exists (the signed repo serves only the broken latest),
+# so this is the integrity ceiling. We deliberately do NOT add the cloudflare-warp
+# yum repo: an enabled repo would make `dnf upgrade` try (and fail) to pull the
+# webkit2gtk3-requiring latest. To bump WARP, change WARP_PIN + WARP_SHA256 below;
+# this is a run_onchange script so editing them re-runs this block.
+#
+# Enrollment stays manual via SSO (warp-cli teams-enroll <team>; warp-cli
+# connect), intentionally not scripted, so no org name or secret lives in the
+# repo. The GUI tray (warp-desktop-svc user unit) is masked by the
+# run_after_20-warp-tray-mask script; WARP status lives in waybar (custom/vpn).
+WARP_PIN="2026.3.846.0"
+WARP_SHA256="a272001189ffdfe6886b5520d396d17c99065fb66f9aaf3a48e36ca6e0fa6358"
+WARP_URL="https://downloads.cloudflareclient.com/v1/download/fedora34-intel/version/${WARP_PIN}"
+
+# Remove the repo left by the previous --nodeps approach so dnf upgrade can't try
+# the broken latest. No-op once gone.
+if [ -f /etc/yum.repos.d/cloudflare-warp.repo ]; then
+    sudo rm -f /etc/yum.repos.d/cloudflare-warp.repo
+fi
+
+if [ "$(rpm -q --qf '%{VERSION}' cloudflare-warp 2>/dev/null || true)" != "$WARP_PIN" ]; then
+    echo "Installing Cloudflare WARP ${WARP_PIN} (pinned, clean deps)..."
     if ! (
         set -eo pipefail
-        if [ ! -f /etc/yum.repos.d/cloudflare-warp.repo ]; then
-            sudo rpm --import https://pkg.cloudflareclient.com/pubkey.gpg
-            echo -e "[cloudflare-warp-stable]\nname=cloudflare-warp\nbaseurl=https://pkg.cloudflareclient.com/rpm\nenabled=1\ntype=rpm\ngpgcheck=1\ngpgkey=https://pkg.cloudflareclient.com/pubkey.gpg" | sudo tee /etc/yum.repos.d/cloudflare-warp.repo > /dev/null
-        fi
         tmp=$(mktemp -d)
         trap 'rm -rf "$tmp"' EXIT
-        dnf download --repo cloudflare-warp-stable --arch x86_64 --destdir="$tmp" cloudflare-warp
-        rpm_file=$(echo "$tmp"/cloudflare-warp*.rpm)
-        rpm -K "$rpm_file"          # GPG + digest verify (key imported above)
-        sudo rpm -U --nodeps "$rpm_file"
+        curl -fSL --max-time 120 -o "$tmp/warp.rpm" "$WARP_URL"
+        echo "${WARP_SHA256}  $tmp/warp.rpm" | sha256sum -c -
+        sudo dnf install -y --setopt=localpkg_gpgcheck=0 "$tmp/warp.rpm"
         sudo systemctl enable --now warp-svc.service
     ); then
-        echo "WARNING: cloudflare-warp install failed (network or packaging change?); skipping" >&2
+        echo "WARNING: cloudflare-warp install failed (network, checksum, or packaging change?); skipping" >&2
     fi
 fi
 {{- end }}
