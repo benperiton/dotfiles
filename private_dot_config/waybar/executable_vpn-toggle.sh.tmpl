@@ -1,0 +1,17 @@
+#!/bin/sh
+# waybar custom/vpn on-click handler. Rendered per machine_role (chezmoi
+# template): toggles Cloudflare WARP on work; opens the NetworkManager
+# connection editor on personal (where the standard WireGuard profiles from
+# script 07 live). After a work toggle, signal waybar (SIGRTMIN+8) so custom/vpn
+# repaints immediately rather than waiting for its 5s tick.
+
+{{ if eq .machine_role "work" -}}
+if warp-cli status 2>/dev/null | grep -q 'Status update: Connected'; then
+    warp-cli disconnect
+else
+    warp-cli connect
+fi
+pkill -RTMIN+8 waybar 2>/dev/null || true
+{{- else -}}
+nm-connection-editor
+{{- end }}

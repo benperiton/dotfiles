@@ -125,7 +125,7 @@
             "exec": "~/.config/waybar/vpn-status.sh",
             "interval": 5,
             "signal": 8,
-            "on-click": "~/.config/waybar/warp-toggle.sh"
+            "on-click": "~/.config/waybar/vpn-toggle.sh"
         },
         "battery": {
             "states": {
