@@ -37,6 +37,10 @@ GUI_PACKAGES=(
     gstreamer1-plugins-bad-freeworld
     gstreamer1-plugins-ugly
     gstreamer1-vaapi
+    # poppler-utils provides pdftoppm, used by the pptx-editing skill's render.sh
+    # to turn rendered slide PDFs into per-slide PNGs for visual verification.
+    # (python-pptx is in its own venv; LibreOffice is a flatpak in script 08.)
+    poppler-utils
     # Browsers + VS Code: installed via dnf (Microsoft/Google repos configured
     # below), NOT as Flatpaks. Flatpak builds are sandboxed and break host
     # integration — VS Code: the integrated terminal, host toolchain/Docker,
