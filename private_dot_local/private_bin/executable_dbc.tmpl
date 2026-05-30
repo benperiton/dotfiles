@@ -121,7 +121,7 @@ wait_for_ssh() {
   host="${host:-$DEVBOX}"
   echo "devtime: waiting for SSH to be ready on ${host}..." >&2
   while (( waited < max )); do
-    if ssh -o ConnectTimeout=2 -o BatchMode=yes "$DEVBOX" true 2>/dev/null; then
+    if timeout 2 bash -c "</dev/tcp/${host}/22" 2>/dev/null; then
       return 0
     fi
     sleep 3
