@@ -10,18 +10,18 @@ if ! flatpak remotes | grep -q flathub; then
     sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 fi
 
-# NOTE: Web browsers (Firefox, Google Chrome, Microsoft Edge) and VS Code are
-# intentionally NOT Flatpaks here. They are installed via dnf in
-# run_onchange_before_01-install-packages.sh.tmpl (GUI_PACKAGES): firefox and
-# code (VS Code) on all GUI machines; google-chrome-stable on personal machines
-# only; microsoft-edge-stable on work machines only (Chromium-based, so it
-# replaces Chrome on work). Flatpak builds are sandboxed and degrade host
-# integration (VS Code: integrated terminal, host toolchains/Docker,
-# extensions; browsers: native messaging, host file access).
+# NOTE: Web browsers (Firefox, Google Chrome, Microsoft Edge), VS Code and
+# Sublime Text are intentionally NOT Flatpaks here. They are installed via dnf
+# in run_onchange_before_01-install-packages.sh.tmpl (GUI_PACKAGES): firefox,
+# code (VS Code) and sublime-text on all GUI machines; google-chrome-stable on
+# personal machines only; microsoft-edge-stable on work machines only
+# (Chromium-based, so it replaces Chrome on work). Flatpak builds are sandboxed
+# and degrade host integration (editors: integrated terminal, host
+# toolchains/Docker, language servers, extensions; browsers: native messaging,
+# host file access). Any of these left over as Flatpaks is removed below.
 COMMON_FLATPAKS=(
     org.gimp.GIMP
     org.inkscape.Inkscape
-    com.sublimetext.three
     org.libreoffice.LibreOffice
     org.filezillaproject.Filezilla
     com.usebruno.Bruno
@@ -53,6 +53,30 @@ done
 if [ ${#MISSING[@]} -gt 0 ]; then
     echo "Installing: ${MISSING[*]}"
     sudo flatpak install -y flathub "${MISSING[@]}"
+fi
+
+# Remove Flatpaks superseded by the dnf installs in script 01 (browsers, VS
+# Code, Sublime Text). Keeps an already-provisioned machine consistent after the
+# move to dnf, and completes the migration off the unmaintained Sublime Flathub
+# build. Idempotent: only uninstalls Flatpaks actually present. Sandbox data
+# under ~/.var/app is left in place; remove it by hand once you've confirmed the
+# dnf build works (e.g. rm -rf ~/.var/app/com.sublimetext.three).
+REMOVE_FLATPAKS=(
+    com.sublimetext.three
+    org.mozilla.firefox
+    com.google.Chrome
+    com.microsoft.Edge
+    com.visualstudio.code
+)
+TO_REMOVE=()
+for app in "${REMOVE_FLATPAKS[@]}"; do
+    if flatpak info --user "$app" &>/dev/null || flatpak info --system "$app" &>/dev/null; then
+        TO_REMOVE+=("$app")
+    fi
+done
+if [ ${#TO_REMOVE[@]} -gt 0 ]; then
+    echo "Removing Flatpaks superseded by dnf: ${TO_REMOVE[*]}"
+    sudo flatpak uninstall -y "${TO_REMOVE[@]}"
 fi
 
 echo "GUI apps configured"

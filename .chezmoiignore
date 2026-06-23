@@ -11,6 +11,8 @@ setup-hibernate.sh
 .config/sway
 .config/waybar
 .config/gammastep
+.config/sublime-text
+.config/Code
 .local/bin/sway-cheatsheet
 {{- end }}
 {{- if eq .machine_role "work" }}

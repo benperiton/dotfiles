@@ -1,0 +1,65 @@
+#!/bin/bash
+{{- if ne .machine_type "headless" }}
+set -euo pipefail
+
+# Manage VS Code extensions declaratively, replacing Settings Sync's extension
+# sync. This array is the desired state: anything listed is installed if
+# missing, and anything installed but NOT listed is uninstalled. So pruning an
+# extension everywhere = deleting its line here. Mirrors the package/flatpak
+# arrays in scripts 01 and 08; run_onchange re-runs whenever the list changes.
+#
+# One common list for personal and work for now. If the two ever need to differ,
+# split with {{ if eq .machine_role "personal" }} ... {{ end }} like script 01.
+EXTENSIONS=(
+    adpyke.codesnap
+    alefragnani.project-manager
+    amiralizadeh9480.laravel-extra-intellisense
+    bmewburn.vscode-intelephense-client
+    bradlc.vscode-tailwindcss
+    eamodio.gitlens
+    formulahendry.auto-rename-tag
+    graphql.vscode-graphql-syntax
+    jdinhlife.gruvbox
+    jkjustjoshing.vscode-text-pastry
+    michelemelluso.gitignore
+    mikestead.dotenv
+    ms-vscode-remote.remote-ssh
+    ms-vscode.sublime-keybindings
+    pkief.material-icon-theme
+    redhat.vscode-xml
+    yzhang.markdown-all-in-one
+)
+
+# code is installed by script 01 (before files); guard for safety regardless.
+if ! command -v code >/dev/null 2>&1; then
+    echo "code not on PATH yet; skipping VS Code extensions"
+    exit 0
+fi
+
+# Desired and installed sets, lowercased (VS Code extension IDs are
+# case-insensitive but --list-extensions returns canonical case).
+declare -A want=()
+for e in "${EXTENSIONS[@]}"; do want["${e,,}"]=1; done
+
+mapfile -t installed < <(code --list-extensions)
+declare -A have=()
+for e in "${installed[@]}"; do have["${e,,}"]=1; done
+
+# Install missing. Warn-and-continue: a marketplace hiccup must not abort apply.
+for e in "${EXTENSIONS[@]}"; do
+    if [ -z "${have[${e,,}]:-}" ]; then
+        echo "Installing extension: ${e}"
+        code --install-extension "${e}" --force || echo "WARNING: failed to install ${e}" >&2
+    fi
+done
+
+# Prune anything installed but not in the desired list.
+for e in "${installed[@]}"; do
+    if [ -z "${want[${e,,}]:-}" ]; then
+        echo "Removing extension: ${e}"
+        code --uninstall-extension "${e}" || echo "WARNING: failed to uninstall ${e}" >&2
+    fi
+done
+
+echo "VS Code extensions synced (${#EXTENSIONS[@]} desired)"
+{{- end }}

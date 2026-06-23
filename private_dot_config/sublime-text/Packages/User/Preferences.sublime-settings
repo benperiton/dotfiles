@@ -1,0 +1,14 @@
+{
+	// Matches the terminal (alacritty) typeface and size; see
+	// private_dot_config/alacritty/alacritty.toml.
+	"font_face": "FiraCode Nerd Font Mono",
+	"font_size": 12,
+	"ignored_packages":
+	[
+		"Vintage"
+	],
+	"index_files": true,
+	// dnf manages updates for the native ST4 build, so silence the in-app
+	// "update available" nag (it only links to the download page anyway).
+	"update_check": false
+}

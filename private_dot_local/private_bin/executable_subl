@@ -1,20 +1,19 @@
 #!/bin/sh
-# Open files/dirs in Sublime Text, which is installed as a Flatpak
-# (com.sublimetext.three). Usage: subl file.txt, subl dir, subl file:line:col
+# Open files/dirs in Sublime Text, now installed natively via dnf (the official
+# Sublime HQ repo). Usage: subl file.txt, subl dir, subl file:line:col
 #
-# Works in two contexts:
-#   - On the host (normal terminal use): call `flatpak run` directly.
-#   - Inside another Flatpak sandbox (e.g. FileZilla's external editor): break
-#     out to the host with flatpak-spawn, since `flatpak` itself isn't in the
-#     sandbox. FileZilla is configured to use this script as its editor, and its
-#     edit temp dir is redirected (TMPDIR override) to a host-visible path so the
-#     file it hands us is the same file on disk that Sublime opens.
+# This wrapper stays in place for one reason: FileZilla's "external editor".
+# FileZilla runs in a Flatpak sandbox and can't exec a host binary directly, so
+# it must break out to the host with flatpak-spawn (and it's configured to call
+# this script by absolute path). On the host this is a thin passthrough to the
+# real /usr/bin/subl, called by absolute path so the wrapper -- which shadows
+# subl on PATH via ~/.local/bin -- never recurses into itself.
 if [ -f /.flatpak-info ]; then
-    # Inside another Flatpak sandbox (e.g. FileZilla's external editor): break
-    # out to the host. Stay in the foreground so FileZilla can track the edit.
-    exec flatpak-spawn --host flatpak run --command=subl com.sublimetext.three "$@"
+    # Inside a Flatpak sandbox (e.g. FileZilla's external editor): break out to
+    # the host. Stay in the foreground so FileZilla can track the edit.
+    exec flatpak-spawn --host subl "$@"
 else
-    # On the host: detach (new session, fork) so the terminal returns
-    # immediately instead of blocking until Sublime is closed.
-    setsid -f flatpak run --command=subl com.sublimetext.three "$@" >/dev/null 2>&1
+    # On the host: native subl returns immediately (it doesn't block unless
+    # passed -w), so the terminal is freed without the old setsid detach.
+    exec /usr/bin/subl "$@"
 fi

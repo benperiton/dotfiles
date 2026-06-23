@@ -2,25 +2,25 @@
 {{- if ne .machine_type "headless" }}
 set -euo pipefail
 
-# Wire up the host Sublime Text Flatpak as FileZilla's external editor.
-# Everything for that one capability lives here. The CLI side is the wrapper
-# script ~/.local/bin/subl (private_dot_local/private_bin/executable_subl);
+# Wire up host Sublime Text (installed natively via dnf) as FileZilla's external
+# editor. Everything for that one capability lives here. The CLI side is the
+# wrapper script ~/.local/bin/subl (private_dot_local/private_bin/executable_subl);
 # FileZilla is installed in run_onchange_before_08-setup-gui-apps.sh.
 #
 # Two pieces:
-#   1. Sandbox overrides so a sandboxed FileZilla can launch the (separately
-#      sandboxed) Sublime and hand it a file both can see.
+#   1. Sandbox overrides so a sandboxed FileZilla can launch host Sublime and
+#      hand it a file both can see.
 #   2. Point FileZilla's "external editor" setting at the wrapper script.
 
 # --- 1. Flatpak overrides (idempotent) -------------------------------------
-# FileZilla can't run `flatpak` directly from inside its sandbox, and its edit
-# temp dir is sandbox-private, so:
+# FileZilla can't exec host binaries from inside its sandbox, and its edit temp
+# dir is sandbox-private, so:
 #   - talk to org.freedesktop.Flatpak -> lets `flatpak-spawn --host` (used by
-#     ~/.local/bin/subl when it detects it's in a sandbox) break out to the host.
+#     ~/.local/bin/subl when it detects it's in a sandbox) break out to the host
+#     and run the native subl there.
 #   - redirect TMPDIR to a host-visible $HOME path -> FileZilla downloads the
 #     remote file to edit into $TMPDIR; the default sandbox /tmp is private, so
-#     Sublime (a separate sandbox) couldn't see it. A real $HOME path is visible
-#     to both.
+#     host Sublime couldn't see it. A real $HOME path is visible to both.
 FZ_EDIT_TMP="${HOME}/.cache/filezilla-edit"
 mkdir -p "${FZ_EDIT_TMP}"
 flatpak override --user --talk-name=org.freedesktop.Flatpak org.filezillaproject.Filezilla

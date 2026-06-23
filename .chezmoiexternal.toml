@@ -22,6 +22,16 @@
     include = ["**/*.ttf", "**/*.TTF"]
     refreshPeriod = "168h"
 
+# Sublime Text Package Control bootstrap. Dropping this .sublime-package into
+# "Installed Packages" is what lets Package Control run on first launch and then
+# install everything listed in installed_packages
+# (private_dot_config/sublime-text/Packages/User/Package Control.sublime-settings).
+# Gated off on headless via .chezmoiignore (.config/sublime-text).
+[".config/sublime-text/Installed Packages/Package Control.sublime-package"]
+    type = "file"
+    url = "https://packagecontrol.io/Package%20Control.sublime-package"
+    refreshPeriod = "168h"
+
 [".local/bin/winbox"]
     type = "archive-file"
     url = "https://download.mikrotik.com/routeros/winbox/4.0.1/WinBox_Linux.zip"

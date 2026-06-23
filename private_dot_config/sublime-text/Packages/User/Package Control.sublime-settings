@@ -1,0 +1,15 @@
+{
+	"bootstrapped": true,
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"GenerateUUID",
+		"Gruvbox Dark",
+		"Package Control",
+		"Pretty JSON",
+		"Pretty YAML",
+		"Text Pastry"
+	]
+}
