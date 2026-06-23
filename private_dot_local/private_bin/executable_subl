@@ -10,7 +10,11 @@
 #     edit temp dir is redirected (TMPDIR override) to a host-visible path so the
 #     file it hands us is the same file on disk that Sublime opens.
 if [ -f /.flatpak-info ]; then
+    # Inside another Flatpak sandbox (e.g. FileZilla's external editor): break
+    # out to the host. Stay in the foreground so FileZilla can track the edit.
     exec flatpak-spawn --host flatpak run --command=subl com.sublimetext.three "$@"
 else
-    exec flatpak run --command=subl com.sublimetext.three "$@"
+    # On the host: detach (new session, fork) so the terminal returns
+    # immediately instead of blocking until Sublime is closed.
+    setsid -f flatpak run --command=subl com.sublimetext.three "$@" >/dev/null 2>&1
 fi
