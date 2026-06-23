@@ -49,12 +49,20 @@ import os, re, sys
 fz = sys.argv[1]
 subl = os.environ["SUBL"]
 s = open(fz, encoding="utf-8").read()
+# "Default editor" is stored as a mode digit + path. The leading "2" selects
+# "use the following custom editor"; without it FileZilla treats the field as
+# mode 0 (system default) and falls back to file-type associations.
 s, _ = re.subn(
     r'<Setting name="Default editor" platform="unix"\s*(?:/>|>[^<]*</Setting>)',
-    f'<Setting name="Default editor" platform="unix">{subl}</Setting>', s)
+    f'<Setting name="Default editor" platform="unix">2{subl}</Setting>', s)
+# Always use that editor rather than per-extension associations.
 s, _ = re.subn(
     r'(<Setting name="Always use default editor">)[^<]*(</Setting>)',
     r'\g<1>1\g<2>', s)
+# Double-clicking a remote file opens it in the editor (2 = view/edit).
+s, _ = re.subn(
+    r'(<Setting name="File doubleclick action">)[^<]*(</Setting>)',
+    r'\g<1>2\g<2>', s)
 open(fz, "w", encoding="utf-8").write(s)
 PY
 
