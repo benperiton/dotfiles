@@ -1,0 +1,16 @@
+#!/bin/sh
+# Open files/dirs in Sublime Text, which is installed as a Flatpak
+# (com.sublimetext.three). Usage: subl file.txt, subl dir, subl file:line:col
+#
+# Works in two contexts:
+#   - On the host (normal terminal use): call `flatpak run` directly.
+#   - Inside another Flatpak sandbox (e.g. FileZilla's external editor): break
+#     out to the host with flatpak-spawn, since `flatpak` itself isn't in the
+#     sandbox. FileZilla is configured to use this script as its editor, and its
+#     edit temp dir is redirected (TMPDIR override) to a host-visible path so the
+#     file it hands us is the same file on disk that Sublime opens.
+if [ -f /.flatpak-info ]; then
+    exec flatpak-spawn --host flatpak run --command=subl com.sublimetext.three "$@"
+else
+    exec flatpak run --command=subl com.sublimetext.three "$@"
+fi

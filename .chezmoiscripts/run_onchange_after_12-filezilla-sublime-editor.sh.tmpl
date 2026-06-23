@@ -1,0 +1,62 @@
+#!/bin/bash
+{{- if ne .machine_type "headless" }}
+set -euo pipefail
+
+# Wire up the host Sublime Text Flatpak as FileZilla's external editor.
+# Everything for that one capability lives here. The CLI side is the wrapper
+# script ~/.local/bin/subl (private_dot_local/private_bin/executable_subl);
+# FileZilla is installed in run_onchange_before_08-setup-gui-apps.sh.
+#
+# Two pieces:
+#   1. Sandbox overrides so a sandboxed FileZilla can launch the (separately
+#      sandboxed) Sublime and hand it a file both can see.
+#   2. Point FileZilla's "external editor" setting at the wrapper script.
+
+# --- 1. Flatpak overrides (idempotent) -------------------------------------
+# FileZilla can't run `flatpak` directly from inside its sandbox, and its edit
+# temp dir is sandbox-private, so:
+#   - talk to org.freedesktop.Flatpak -> lets `flatpak-spawn --host` (used by
+#     ~/.local/bin/subl when it detects it's in a sandbox) break out to the host.
+#   - redirect TMPDIR to a host-visible $HOME path -> FileZilla downloads the
+#     remote file to edit into $TMPDIR; the default sandbox /tmp is private, so
+#     Sublime (a separate sandbox) couldn't see it. A real $HOME path is visible
+#     to both.
+FZ_EDIT_TMP="${HOME}/.cache/filezilla-edit"
+mkdir -p "${FZ_EDIT_TMP}"
+flatpak override --user --talk-name=org.freedesktop.Flatpak org.filezillaproject.Filezilla
+flatpak override --user --env="TMPDIR=${FZ_EDIT_TMP}" org.filezillaproject.Filezilla
+
+# --- 2. FileZilla editor setting -------------------------------------------
+# filezilla.xml is owned and constantly rewritten by FileZilla itself, so we do
+# NOT manage the whole file with chezmoi -- we patch just the two settings, and
+# only when it's safe: the file must already exist (FileZilla has run at least
+# once) and FileZilla must be closed (or it would overwrite us on exit).
+FZ="${HOME}/.var/app/org.filezillaproject.Filezilla/config/filezilla/filezilla.xml"
+SUBL="${HOME}/.local/bin/subl"
+
+if [ ! -f "${FZ}" ]; then
+    echo "FileZilla config not present yet; launch FileZilla once, then 'chezmoi apply'. Skipping editor setting."
+    exit 0
+fi
+
+if pgrep -x filezilla >/dev/null 2>&1; then
+    echo "FileZilla is running; close it and re-run 'chezmoi apply' to set the editor. Skipping editor setting."
+    exit 0
+fi
+
+SUBL="${SUBL}" python3 - "${FZ}" <<'PY'
+import os, re, sys
+fz = sys.argv[1]
+subl = os.environ["SUBL"]
+s = open(fz, encoding="utf-8").read()
+s, _ = re.subn(
+    r'<Setting name="Default editor" platform="unix"\s*(?:/>|>[^<]*</Setting>)',
+    f'<Setting name="Default editor" platform="unix">{subl}</Setting>', s)
+s, _ = re.subn(
+    r'(<Setting name="Always use default editor">)[^<]*(</Setting>)',
+    r'\g<1>1\g<2>', s)
+open(fz, "w", encoding="utf-8").write(s)
+PY
+
+echo "FileZilla external editor set to ${SUBL}"
+{{- end }}
