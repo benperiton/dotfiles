@@ -1,0 +1,26 @@
+{
+  // Match the terminal (alacritty), Sublime and VS Code editor font.
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false
+  },
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry"
+    }
+  },
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
+  "buffer_font_family": "FiraCode Nerd Font Mono",
+  "buffer_font_size": 12,
+  // Match the Gruvbox theme used across the terminal and the other editors.
+  "theme": {
+    "mode": "dark",
+    "light": "Gruvbox Light",
+    "dark": "Gruvbox Dark"
+  }
+}

@@ -13,6 +13,7 @@ setup-hibernate.sh
 .config/gammastep
 .config/sublime-text
 .config/Code
+.config/zed
 .local/bin/sway-cheatsheet
 {{- end }}
 {{- if eq .machine_role "work" }}

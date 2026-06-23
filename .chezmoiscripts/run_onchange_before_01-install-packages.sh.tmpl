@@ -200,6 +200,20 @@ if ! command -v jj &>/dev/null; then
         echo "WARNING: jj install failed (network/download blocked?) — skipping" >&2
     fi
 fi
+{{- if ne .machine_type "headless" }}
+
+# Zed editor (GUI machines only). No official rpm repo, so use Zed's official
+# installer, which drops a self-updating build under ~/.local (no sudo) and a
+# launcher + desktop entry. Native rather than Flatpak for the same reason as
+# VS Code / Sublime: an editor needs host toolchains, the integrated terminal
+# and language servers, which the sandbox breaks. warn-and-continue.
+if ! command -v zed &>/dev/null; then
+    echo "Installing Zed..."
+    if ! ( set -eo pipefail; curl -fsSL https://zed.dev/install.sh | sh ); then
+        echo "WARNING: Zed install failed (network blocked?) — skipping" >&2
+    fi
+fi
+{{- end }}
 {{- if eq .machine_role "work" }}
 
 # Cloudflare WARP (Zero Trust client). Fedora is community-supported, not

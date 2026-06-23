@@ -1,6 +1,7 @@
 {
   "editor.fontFamily": "FiraCode Nerd Font Mono, monospace",
   "editor.fontSize": 12,
+  "extensions.ignoreRecommendations": true,
   "workbench.colorTheme": "Dark Modern",
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.expand": false,
