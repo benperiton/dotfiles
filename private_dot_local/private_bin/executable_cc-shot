@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# cc-shot — make a screenshot available to Claude Code running on devbox.
+#
+# Claude Code over SSH can't read a remote clipboard; it only ingests a local
+# file path (it auto-detects a pasted path to an image and reads the file).
+# This script region-captures with grim, lands the PNG on devbox at a fixed
+# path, then copies that devbox-side path to the clipboard so you can paste it
+# straight into Claude Code's prompt.
+#
+#   - From the laptop: the image is streamed to devbox over ssh.
+#   - On devbox itself: the image is saved locally.
+# Either way the clipboard ends up with the devbox path Claude Code needs.
+#
+# Bound to $mod+Print in sway. Leaves Print/Alt+Print/Ctrl+Print (grim+swappy)
+# alone. Terminal- and tmux-agnostic: only a short text path is pasted.
+
+box="devbox"
+dir="/home/ben/.cache/cc-shots"
+path="$dir/cc-$(date +%Y%m%d-%H%M%S).png"
+
+# Region select on the local display; exit quietly if cancelled.
+geom="$(slurp)" || exit 0
+
+if [ "$(hostname)" = "$box" ]; then
+  mkdir -p "$dir"
+  grim -g "$geom" "$path"
+else
+  grim -g "$geom" - | ssh "$box" "mkdir -p '$dir' && cat > '$path'"
+fi
+
+printf '%s' "$path" | wl-copy
+notify-send "Claude Code screenshot" "Path copied — paste into Claude Code" -t 2500
