@@ -142,6 +142,11 @@ docker_args=(
 docker_args+=(-v ccc-nix-store:/nix)
 docker_args+=(-v ccc-devbox-cache:/home/node/.cache)
 
+# Make cc-shot screenshots visible inside the sandbox so Claude Code can read
+# pasted /home/ben/.cache/cc-shots/*.png paths (/home/ben -> /home/node symlink)
+mkdir -p "$HOME/.cache/cc-shots"
+docker_args+=(-v "$HOME/.cache/cc-shots":/home/node/.cache/cc-shots)
+
 # Pass through git config for commits
 if [[ -f "$HOME/.gitconfig" ]]; then
   docker_args+=(-v "$HOME/.gitconfig":/home/node/.gitconfig:ro)
