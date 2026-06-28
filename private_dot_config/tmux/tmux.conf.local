@@ -539,6 +539,12 @@ set -g @prefix_highlight_sync_prompt 'SYNC'
 # then, use #{foo} in e.g. the 'tmux_conf_theme_status_left' or the
 # 'tmux_conf_theme_status_right' variables.
 
+# -- image paste / clipboard passthrough (for Claude Code over SSH) -------------
+# Let OSC 52 / DCS passthrough sequences reach the outer terminal so clipboard
+# image pastes survive the tmux layer.
+set -g allow-passthrough on
+set -g set-clipboard on
+
 # ------------------------------------------------------------------------------
 
 # # /!\ do not remove the following line
