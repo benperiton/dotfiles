@@ -23,11 +23,15 @@ path="$dir/cc-$(date +%Y%m%d-%H%M%S).png"
 # Region select on the local display; exit quietly if cancelled.
 geom="$(slurp)" || exit 0
 
+# Drop screenshots older than 7 days so the cache dir doesn't grow unbounded.
+prune="find '$dir' -type f -name 'cc-*.png' -mtime +7 -delete"
+
 if [ "$(hostname)" = "$box" ]; then
   mkdir -p "$dir"
   grim -g "$geom" "$path"
+  sh -c "$prune" 2>/dev/null || true
 else
-  grim -g "$geom" - | ssh "$box" "mkdir -p '$dir' && cat > '$path'"
+  grim -g "$geom" - | ssh "$box" "mkdir -p '$dir' && cat > '$path' && $prune"
 fi
 
 printf '%s' "$path" | wl-copy
