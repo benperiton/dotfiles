@@ -20,6 +20,10 @@ box="devbox"
 dir="/home/ben/.cache/cc-shots"
 path="$dir/cc-$(date +%Y%m%d-%H%M%S).png"
 
+# sway-launched processes don't inherit SSH_AUTH_SOCK like shells do, so point
+# ssh at the systemd user ssh-agent (fixed socket, already holds the key).
+export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-${XDG_RUNTIME_DIR}/ssh-agent.socket}"
+
 die() { notify-send -u critical "cc-shot failed" "$1" -t 8000; exit 1; }
 
 # Region select on the local display; exit quietly if cancelled.
