@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # cc-shot — make a screenshot available to Claude Code running on devbox.
 #
@@ -20,6 +20,8 @@ box="devbox"
 dir="/home/ben/.cache/cc-shots"
 path="$dir/cc-$(date +%Y%m%d-%H%M%S).png"
 
+die() { notify-send -u critical "cc-shot failed" "$1" -t 8000; exit 1; }
+
 # Region select on the local display; exit quietly if cancelled.
 geom="$(slurp)" || exit 0
 
@@ -28,11 +30,15 @@ prune="find '$dir' -type f -name 'cc-*.png' -mtime +7 -delete"
 
 if [ "$(hostname)" = "$box" ]; then
   mkdir -p "$dir"
-  grim -g "$geom" "$path"
+  err="$(grim -g "$geom" "$path" 2>&1)" || die "grim: ${err:-unknown}"
   sh -c "$prune" 2>/dev/null || true
 else
-  grim -g "$geom" - | ssh "$box" "mkdir -p '$dir' && cat > '$path' && $prune"
+  # Non-interactive ssh: fail fast with a readable error instead of hanging.
+  err="$({ grim -g "$geom" - \
+    | ssh -o BatchMode=yes -o ConnectTimeout=8 "$box" \
+        "mkdir -p '$dir' && cat > '$path' && $prune"; } 2>&1)" \
+    || die "capture/ssh: ${err:-unknown}"
 fi
 
-printf '%s' "$path" | wl-copy
-notify-send "Claude Code screenshot" "Path copied — paste into Claude Code" -t 2500
+printf '%s' "$path" | wl-copy || die "wl-copy failed"
+notify-send "Claude Code screenshot" "Copied: $path" -t 2500
