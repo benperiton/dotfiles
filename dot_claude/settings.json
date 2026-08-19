@@ -18,5 +18,10 @@
   "theme": "auto",
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "gitAttribution": false
+  "gitAttribution": false,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  }
 }
