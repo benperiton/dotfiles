@@ -29,6 +29,14 @@ GUI_PACKAGES=(
     sway
     alacritty
     NetworkManager
+    # NetworkManager is only the daemon; nm-applet is a separate package and is
+    # the sole GUI for joining a network here, since waybar has no network
+    # module. It needs no sway exec: the package ships
+    # /etc/xdg/autostart/nm-applet.desktop, which systemd's XDG autostart
+    # generator turns into app-nm\x2dapplet@autostart.service. Script 06
+    # provisions the home SSID from 1Password, so a rebuild gets online
+    # unattended at home; this is what covers every other network.
+    network-manager-applet
     flatpak
     autorandr
     gammastep
