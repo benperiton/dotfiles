@@ -35,6 +35,13 @@ GUI_PACKAGES=(
     mako
     wlogout
     swappy
+    # blueman provides blueman-applet, started from the sway config's exec
+    # block; its tray icon is how devices get paired and connected on these
+    # machines. Not a weak dep of anything we install, and script 01 runs dnf
+    # with install_weak_deps=False, so it has to be listed explicitly or the
+    # sway exec silently points at a missing binary. (The AirPods-specific
+    # controller/codec setup lives in script 10.)
+    blueman
     ffmpeg
     gstreamer1-plugins-bad-freeworld
     gstreamer1-plugins-ugly
